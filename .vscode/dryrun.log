@@ -1,0 +1,5 @@
+make --dry-run --keep-going --print-directory
+make: Entering directory `/Users/manas/Documents/Projects/ManuGB'
+g++ ./tmp -o game -I include -L lib -l SDL2-2.0.0
+make: Leaving directory `/Users/manas/Documents/Projects/ManuGB'
+ 
