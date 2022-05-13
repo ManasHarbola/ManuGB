@@ -10,15 +10,17 @@ make all --print-data-base --no-builtin-variables --no-builtin-rules --question
 make: *** No rule to make target `all'.  Stop.
 
 
-# Make data base, printed on Mon May  9 15:16:59 2022
+# Make data base, printed on Tue May 10 20:04:14 2022
 
 # Variables
 
 # automatic
- 
 <D = $(patsubst %/,%,$(dir $<))
+ 
 # automatic
 ?F = $(notdir $?)
+# makefile (from `Makefile', line 4)
+SRC = src
 # environment
 VSCODE_LOG_NATIVE = false
 # automatic
@@ -114,7 +116,6 @@ CONDA_SHLVL = 0
 # default
 MAKE_COMMAND := /Applications/Xcode.app/Contents/Developer/usr/bin/make
 # default
- 
 .VARIABLES := 
 # environment
 TMPDIR = /var/folders/qb/y1tbczls1jq3tcnsg6h5cd700000gn/T/
@@ -157,6 +158,7 @@ SUFFIXES :=
 # environment
 _CE_M = 
 # environment
+ 
 MAKELEVEL := 0
 # environment
 LANG = C
@@ -165,7 +167,7 @@ VSCODE_PID = 27955
 # environment
 _CE_CONDA = 
 # variable set hash-table stats:
-# Load=74/1024=7%, Rehash=0, Collisions=3/100=3%
+# Load=75/1024=7%, Rehash=0, Collisions=3/102=3%
 
 # Pattern-specific Variable Values
 
@@ -201,9 +203,8 @@ all:
 # Not a target:
 Makefile:
 #  Implicit rule search has been done.
-#  Last modified 2022-05-09 15:14:12
+#  Last modified 2022-05-09 15:17:41
 #  File has been updated.
- 
 #  Successfully updated.
 # variable set hash-table stats:
 # Load=0/32=0%, Rehash=0, Collisions=0/0=0%
@@ -221,6 +222,12 @@ build:
 #  File has not been updated.
 
 # Not a target:
+src:
+#  Implicit rule search has not been done.
+#  Modification time never checked.
+#  File has not been updated.
+
+# Not a target:
 lib:
 #  Implicit rule search has not been done.
 #  Modification time never checked.
@@ -232,16 +239,16 @@ lib:
 #  Modification time never checked.
 #  File has not been updated.
 
-game: build lib include
+game: build lib include src
 #  Implicit rule search has not been done.
 #  Modification time never checked.
 #  File has not been updated.
-#  commands to execute (from `Makefile', line 6):
-	g++ ./tmp -o game -I $(INCLUDE) -L $(LIB) -l SDL2-2.0.0
+#  commands to execute (from `Makefile', line 7):
+	g++ $(SRC)/tmp.cpp -o game -I $(INCLUDE) -L $(LIB) -l SDL2-2.0.0
 	
 
 # files hash-table stats:
-# Load=8/1024=1%, Rehash=0, Collisions=0/23=0%
+# Load=9/1024=1%, Rehash=0, Collisions=0/25=0%
 # VPATH Search Paths
 
 # No `vpath' search paths.
@@ -253,6 +260,6 @@ game: build lib include
 # strcache size: total = 4096 / max = 4096 / min = 4096 / avg = 4096
 # strcache free: total = 4087 / max = 4087 / min = 4087 / avg = 4087
 
-# Finished Make data base on Mon May  9 15:16:59 2022
+# Finished Make data base on Tue May 10 20:04:14 2022
 
  
