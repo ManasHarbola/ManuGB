@@ -1,14 +1,14 @@
 #pragma once
 
 #include <SDL2/SDL.h>
-#include "CPU.h"
-#include "PPU.h"
-#include "Timer.h"
-#include "ControlManager.h"
-#include "MMU.h"
+#include "cpu/CPU.h"
+#include "ppu/PPU.h"
+#include "timer/Timer.h"
+#include "UI/ControlManager.h"
+#include "mmu/MMU.h"
 #include "DMA.h"
-#include "Serial.h"
-#include "InterruptManager.h"
+#include "serial/Serial.h"
+#include "cpu/InterruptManager.h"
 
 #define CLOCK_FREQ 4194304
 #define CYCLES_PER_FRAME 69905
