@@ -58,7 +58,7 @@ struct registers {
 
 class CPU {
     public:
-        CPU(MMU& mmu, PPU& ppu, Timer& timer, InterruptManager& int_manager);
+        CPU(MMU &mmu, PPU &ppu, Timer &timer, InterruptManager &int_manager);
 
         void init_registers();
         void check_for_interrupt();
@@ -68,8 +68,8 @@ class CPU {
     private:
         registers registers_;
         CPUState state_;
-        MMU& mmu_;
-        PPU& ppu_;
+        MMU &mmu_;
+        PPU &ppu_;
         Timer& timer_;
         InterruptManager& int_manager_;
 
@@ -77,9 +77,17 @@ class CPU {
         
         uint8_t curr_inst_{0x00};
         bool inst_cb_prefixed_{false};
+        bool halt_bug_{false};
         Instruction *inst_{nullptr};
 
         uint32_t total_t_cycles_{0};
         uint8_t t_cycle_lock_{0};
 
+        //temporary space to store results between operations
+        uint8_t lsb_{0};
+        uint8_t msb_{0};
+        uint8_t n_{0};
+        uint16_t nn_{0};
+        uint16_t addr_{0};
+        uint16_t res_{0};
 };

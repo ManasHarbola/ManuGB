@@ -1,6 +1,6 @@
 #include "CPU.h"
 
-CPU::CPU(MMU& mmu, PPU& ppu, Timer& timer, InterruptManager& int_manager) : 
+CPU::CPU(MMU &mmu, PPU &ppu, Timer &timer, InterruptManager &int_manager) : 
 mmu_(mmu), ppu_(ppu), timer_(timer),
 int_manager_(int_manager) {
 
@@ -44,17 +44,36 @@ void CPU::tick() {
     switch (state_)
     {
     case FETCH:
+        if (halt_bug_)
+            halt_bug_ = false;
+
         //check for pending IME enable
         if (int_manager_.pending_enable_IME()) {
             int_manager_.enable_IME();
         }
-
+        
         //get instruction at pc and increment pc
         curr_inst_ = mmu_.read(registers_.pc++);
         //check if this is 0xCB-prefixed instruction
         if (curr_inst_ == 0xCB) {
             state_ = FETCH_CB;
             inst_cb_prefixed_ = true;
+            return;
+        }
+        //check for HALT instruction
+        if (curr_inst_ == 0x76) {
+            if (int_manager_.halt_bug_encountered()) {
+                halt_bug_ = true;
+            } else {
+                state_ = HALT;
+            }
+            return;
+        }
+        //check for STOP instruction
+        if (curr_inst_ = 0x10) {
+            state_ = STOP;
+            //ignore next instruction
+            registers_.pc++;
             return;
         }
 

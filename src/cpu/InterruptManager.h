@@ -13,6 +13,7 @@ enum InterruptType {
 class InterruptManager {
 public:
     bool interrupt_requested();
+    bool halt_bug_encountered();
     InterruptType get_requested_interrupt();
     void request_interrupt(InterruptType interrupt);
     void disable_IME();

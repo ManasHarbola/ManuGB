@@ -12,6 +12,10 @@ bool InterruptManager::interrupt_requested() {
     return (IF & IE) != 0;
 }
 
+bool InterruptManager::halt_bug_encountered() {
+    return ((IE & IF & 0x1F) != 0) && !IME;
+}
+
 InterruptType InterruptManager::get_requested_interrupt() {
     if (IF & IE & (uint8_t)(VBLANK)) return VBLANK;
     if (IF & IE & (uint8_t)(LCDSTAT)) return LCDSTAT;
