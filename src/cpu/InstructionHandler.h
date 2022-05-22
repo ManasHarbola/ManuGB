@@ -89,38 +89,6 @@ private:
     static void pop_rr_1(CPU &cpu, uint16_t &rr);
     static void pop_rr_2(CPU &cpu, uint16_t &rr);
     
-    /*
-    add A,r	8x	4	z0hc	A=A+r
-    add A,n	C6 nn	8	z0hc	A=A+n
-    add A,(HL)	86	8	z0hc	A=A+(HL)
-    adc A,r	8x	4	z0hc	A=A+r+cy
-    adc A,n	CE nn	8	z0hc	A=A+n+cy
-    adc A,(HL)	8E	8	z0hc	A=A+(HL)+cy
-    sub r	9x	4	z1hc	A=A-r
-    sub n	D6 nn	8	z1hc	A=A-n
-    sub (HL)	96	8	z1hc	A=A-(HL)
-    sbc A,r	9x	4	z1hc	A=A-r-cy
-    sbc A,n	DE nn	8	z1hc	A=A-n-cy
-    sbc A,(HL)	9E	8	z1hc	A=A-(HL)-cy
-    and r	Ax	4	z010	A=A & r
-    and n	E6 nn	8	z010	A=A & n
-    and (HL)	A6	8	z010	A=A & (HL)
-    xor r	Ax	4	z000	A=A xor r
-    xor n	EE nn	8	z000	A=A xor n
-    xor (HL)	AE	8	z000	A=A xor (HL)
-    or r	Bx	4	z000	A=A | r
-    or n	F6 nn	8	z000	A=A | n
-    or (HL)	B6	8	z000	A=A | (HL)
-    cp r	Bx	4	z1hc	compare A-r
-    cp n	FE nn	8	z1hc	compare A-n
-    cp (HL)	BE	8	z1hc	compare A-(HL)
-    inc r	xx	4	z0h-	r=r+1
-    inc (HL)	34	12	z0h-	(HL)=(HL)+1
-    dec r	xx	4	z1h-	r=r-1
-    dec (HL)	35	12	z1h-	(HL)=(HL)-1
-    daa	27	4	z-0c	decimal adjust A
-    cpl	2F	4	-11-	A = A xor FF
-    */
 
     //8-bit/16-bit arithmetic instruction
     //ADD A, r
@@ -263,7 +231,75 @@ private:
     static void rst_3(CPU &cpu, uint8_t n);
 
 
-    
+    //8-bit shift, rotate and bit instructions
+    //BIT n, r
+    static void bit_n_r(CPU &cpu, uint8_t bit_pos, uint8_t &r);
+    //BIT n, (HL)
+    static void bit_n_HL_1(CPU &cpu, uint8_t bit_pos);
+    static void bit_n_HL_2(CPU &cpu);
+    //SET n, r
+    static void set_n_r(uint8_t bit_pos, uint8_t &r);
+    //SET n, (HL)
+    static void set_n_HL_1(CPU &cpu, uint8_t bit_pos);
+    static void set_n_HL_2(CPU &cpu);
+    //RES n, r
+    static void res_n_r(uint8_t bit_pos, uint8_t &r);
+    //RES n, (HL)
+    static void res_n_HL_1(CPU &cpu, uint8_t bit_pos);
+    static void res_n_HL_2(CPU &cpu);
+    //SWAP r
+    static void swap_r(CPU &cpu, uint8_t &r);
+    //SWAP (HL)
+    static void swap_HL_1(CPU &cpu);
+    static void swap_HL_2(CPU &cpu);
+    //SRL r
+    static void srl_r(CPU &cpu, uint8_t &r);
+    //SRL (HL)
+    static void srl_HL_1(CPU &cpu);
+    static void srl_HL_2(CPU &cpu);
+    //SLA r
+    static void sla_r(CPU &cpu, uint8_t &r);
+    //SLA (HL)
+    static void sla_HL_1(CPU &cpu);
+    static void sla_HL_2(CPU &cpu);
+    //SRA r
+    static void sra_r(CPU &cpu, uint8_t &r);
+    //SRA (HL)
+    static void sra_HL_1(CPU &cpu);
+    static void sra_HL_2(CPU &cpu);
+    //RL r
+    static void rl_r(CPU &cpu, uint8_t &r);
+    //RL (HL)
+    static void rl_HL_1(CPU &cpu);
+    static void rl_HL_2(CPU &cpu);
+    //RR r
+    static void rr_r(CPU &cpu, uint8_t &r);
+    //RR (HL)
+    static void rr_HL_1(CPU &cpu);
+    static void rr_HL_2(CPU &cpu);
+    //RLC r
+    static void rlc_r(CPU &cpu, uint8_t &r);
+    //RLC (HL)
+    static void rlc_HL_1(CPU &cpu);
+    static void rlc_HL_2(CPU &cpu);
+    //RRC r
+    static void rrc_r(CPU &cpu, uint8_t &r);
+    //RRC (HL)
+    static void rrc_HL_1(CPU &cpu);
+    static void rrc_HL_2(CPU &cpu);
+    //RRC r
+    static void rrc_r(CPU &cpu, uint8_t &r);
+    //RRC (HL)
+    static void rrc_HL_1(CPU &cpu);
+    static void rrc_HL_2(CPU &cpu);
+    //RLCA
+    static void rlca(CPU &cpu);
+    //RRCA
+    static void rrca(CPU &cpu);
+    //RLA
+    static void rla(CPU &cpu);
+    //RRA
+    static void rra(CPU &cpu);
 };
 
 class InstructionHandler

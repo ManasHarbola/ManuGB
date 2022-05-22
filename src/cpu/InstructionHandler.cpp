@@ -535,6 +535,7 @@ void Instruction::jr_n_2(CPU &cpu) {
     cpu.registers_.pc += ((int8_t) cpu.n_);
 }
 
+//JR cc nn
 void Instruction::jr_cc_n_1(CPU &cpu, uint8_t flag, bool not_cc) {
     cpu.n_ = cpu.mmu_.read(cpu.registers_.pc++);
     if (not_cc) {
@@ -655,4 +656,185 @@ void Instruction::rst_2(CPU &cpu, uint8_t n) {
 }
 void Instruction::rst_3(CPU &cpu, uint8_t n) {
     cpu.registers_.pc = (uint16_t) n;
+}
+//BIT n, r
+void Instruction::bit_n_r(CPU &cpu, uint8_t bit_pos, uint8_t &r) {
+    cpu.registers_.f = ((r & (1 << bit_pos)) == 0) ? (cpu.registers_.f | ZERO) : (cpu.registers_.f & ~ZERO);
+    cpu.registers_.f &= ~(SUB);
+    cpu.registers_.f |= HALF_CARRY;
+}
+//BIT n, (HL)
+void Instruction::bit_n_HL_1(CPU &cpu, uint8_t bit_pos) {
+    cpu.n_ = cpu.mmu_.read(cpu.registers_.hl) & (1 << bit_pos);
+}
+void Instruction::bit_n_HL_2(CPU &cpu) {
+    cpu.registers_.f = (cpu.n_ == 0) ? (cpu.registers_.f | ZERO) : (cpu.registers_.f & ~ZERO);
+    cpu.registers_.f &= ~(SUB);
+    cpu.registers_.f |= HALF_CARRY;
+}
+//SET n, r
+void Instruction::set_n_r(uint8_t bit_pos, uint8_t &r) {
+    r |= (1 << bit_pos);
+}
+//SET n, (HL)
+void Instruction::set_n_HL_1(CPU &cpu, uint8_t bit_pos) {
+    cpu.n_ = cpu.mmu_.read(cpu.registers_.hl) | (1 << bit_pos);
+}
+void Instruction::set_n_HL_2(CPU &cpu) {
+    cpu.mmu_.write(cpu.registers_.hl, cpu.mmu_.read(cpu.n_));
+}
+//RES n, r
+void Instruction::res_n_r(uint8_t bit_pos, uint8_t &r) {
+    r &= ~(1 << bit_pos);
+}
+//RES n, (HL)
+void Instruction::res_n_HL_1(CPU &cpu, uint8_t bit_pos) {
+    cpu.n_ = cpu.mmu_.read(cpu.registers_.hl) & ~(1 << bit_pos);
+}
+void Instruction::res_n_HL_2(CPU &cpu) {
+    cpu.mmu_.write(cpu.registers_.hl, cpu.mmu_.read(cpu.n_));
+}
+//SWAP r
+void Instruction::swap_r(CPU &cpu, uint8_t &r) {
+    r = (r << 8) | (r >> 8);
+    cpu.registers_.f = 0;
+    if (r == 0)
+        cpu.registers_.f |= ZERO;
+}
+//SWAP (HL)
+void Instruction::swap_HL_1(CPU &cpu) {
+    cpu.n_ = cpu.mmu_.read(cpu.registers_.hl);
+}
+void Instruction::swap_HL_2(CPU &cpu) {
+    swap_r(cpu, cpu.n_);
+    cpu.mmu_.write(cpu.registers_.hl, cpu.n_);
+}
+//SRL r
+void Instruction::srl_r(CPU &cpu, uint8_t &r) {
+    cpu.registers_.f = 0;
+    cpu.registers_.f |= (r & 0x1) ? CARRY : 0;
+    r >>= 1;
+    cpu.registers_.f |= (r == 0) ? ZERO : 0;   
+}
+//SRL (HL)
+void Instruction::srl_HL_1(CPU &cpu) {
+    cpu.n_ = cpu.mmu_.read(cpu.registers_.hl);
+}
+void Instruction::srl_HL_2(CPU &cpu) {
+    srl_r(cpu, cpu.n_);
+    cpu.mmu_.write(cpu.registers_.hl, cpu.n_);
+}
+//SLA r
+void Instruction::sla_r(CPU &cpu, uint8_t &r) {
+    cpu.registers_.f = 0;
+    cpu.registers_.f |= (r & 0x80) ? CARRY : 0;
+    r <<= 1;
+    cpu.registers_.f |= (r == 0) ? ZERO : 0;
+}
+//SLA (HL)
+void Instruction::sla_HL_1(CPU &cpu) {
+    cpu.n_ = cpu.mmu_.read(cpu.registers_.hl);
+}
+void Instruction::sla_HL_2(CPU &cpu) {
+    sla_r(cpu, cpu.n_);
+    cpu.mmu_.write(cpu.registers_.hl, cpu.n_);
+}
+//SRA r
+void Instruction::sra_r(CPU &cpu, uint8_t &r) {
+    cpu.registers_.f = 0;
+    cpu.registers_.f |= (r & 0x1) ? CARRY : 0;
+    r = (r >> 1) | (r & 0x80);
+    cpu.registers_.f |= (r == 0) ? ZERO : 0;
+}
+//SRA (HL)
+void Instruction::sra_HL_1(CPU &cpu) {
+    cpu.n_ = cpu.mmu_.read(cpu.registers_.hl);
+}
+void Instruction::sra_HL_2(CPU &cpu) {
+    sra_r(cpu, cpu.n_);
+    cpu.mmu_.write(cpu.registers_.hl, cpu.n_);
+}
+//RL r
+void Instruction::rl_r(CPU &cpu, uint8_t &r) {
+    bool c = (r & 0x80);
+    r = (r << 1) | ((cpu.registers_.f & CARRY) ? 1 : 0);
+    cpu.registers_.f = 0;
+    cpu.registers_.f |= (r == 0) ? ZERO : 0;
+    cpu.registers_.f |= (c) ? CARRY : 0;
+}
+//RL (HL)
+void Instruction::rl_HL_1(CPU &cpu) {
+    cpu.n_ = cpu.mmu_.read(cpu.registers_.hl);
+}
+void Instruction::rl_HL_2(CPU &cpu) {
+    rl_r(cpu, cpu.n_);
+    cpu.mmu_.write(cpu.registers_.hl, cpu.n_);
+}
+//RR r
+void Instruction::rr_r(CPU &cpu, uint8_t &r) {
+    bool c = (r & 1);
+    r = (r >> 1) | ((cpu.registers_.f & CARRY) ? (1 << 7) : 0);
+    cpu.registers_.f = 0;
+    cpu.registers_.f |= (r == 0) ? ZERO : 0;
+    cpu.registers_.f |= (c) ? CARRY : 0;
+}
+//RR (HL)
+void Instruction::rr_HL_1(CPU &cpu) {
+    cpu.n_ = cpu.mmu_.read(cpu.registers_.hl);
+}
+void Instruction::rr_HL_2(CPU &cpu) {
+    rr_r(cpu, cpu.n_);
+    cpu.mmu_.write(cpu.registers_.hl, cpu.n_);
+}
+//RLC r
+void Instruction::rlc_r(CPU &cpu, uint8_t &r) {
+    bool c = (r & (1 << 7));
+    r = (r << 1) | ((r & 0x80) >> 7);
+    cpu.registers_.f = 0;
+    cpu.registers_.f |= (r == 0) ? ZERO : 0;
+    cpu.registers_.f |= (c) ? CARRY : 0;
+}
+//RLC (HL)
+void Instruction::rlc_HL_1(CPU &cpu) {
+    cpu.n_ = cpu.mmu_.read(cpu.registers_.hl);
+}
+void Instruction::rlc_HL_2(CPU &cpu) {
+    rlc_r(cpu, cpu.n_);
+    cpu.mmu_.write(cpu.registers_.hl, cpu.n_);
+}
+//RRC r
+void Instruction::rrc_r(CPU &cpu, uint8_t &r) {
+    bool c = (r & 1);
+    r = (r >> 1) | ((r & 1) << 7);
+    cpu.registers_.f = 0;
+    cpu.registers_.f |= (r == 0) ? ZERO : 0;
+    cpu.registers_.f |= (c) ? CARRY : 0;
+}
+//RRC (HL)
+void Instruction::rrc_HL_1(CPU &cpu) {
+    cpu.n_ = cpu.mmu_.read(cpu.registers_.hl);
+}
+void Instruction::rrc_HL_2(CPU &cpu) {
+    rrc_r(cpu, cpu.n_);
+    cpu.mmu_.write(cpu.registers_.hl, cpu.n_);
+}
+//RLCA
+void Instruction::rlca(CPU &cpu) {
+    rlc_r(cpu, cpu.registers_.a);
+    cpu.registers_.f &= ~(ZERO);
+}
+//RRCA
+void Instruction::rrca(CPU &cpu) {
+    rrc_r(cpu, cpu.registers_.a);
+    cpu.registers_.f &= ~(ZERO);
+}
+//RLA
+void Instruction::rla(CPU &cpu) {
+    rl_r(cpu, cpu.registers_.a);
+    cpu.registers_.f &= ~(ZERO);
+}
+//RRA
+void Instruction::rra(CPU &cpu) {
+    rr_r(cpu, cpu.registers_.a);
+    cpu.registers_.f &= ~(ZERO);
 }
