@@ -1,6 +1,6 @@
 #include "InterruptManager.h"
 
-std::unordered_map<InterruptType, uint16_t> InterruptManager::isr_addr = {
+const std::unordered_map<InterruptType, uint16_t> InterruptManager::isr_addrs = {
     {VBLANK, 0x0040},
     {LCDSTAT, 0x0048},
     {TIMER, 0x0050},
@@ -22,6 +22,8 @@ InterruptType InterruptManager::get_requested_interrupt() {
     if (IF & IE & (uint8_t)(TIMER)) return TIMER;
     if (IF & IE & (uint8_t)(SERIAL)) return SERIAL;
     if (IF & IE & (uint8_t)(JOYPAD)) return JOYPAD;
+
+    return NONE;
 }
 
 bool InterruptManager::get_IME() {
@@ -29,7 +31,7 @@ bool InterruptManager::get_IME() {
 }
 
 bool InterruptManager::pending_enable_IME() {
-    return pending_IME_enable;
+    return pending_IME_enable_;
 }
 
 void InterruptManager::request_interrupt(InterruptType interrupt) {
@@ -40,16 +42,20 @@ void InterruptManager::set_IE(uint8_t ie) {
     IE = ie;
 }
 
+void InterruptManager::set_IF(uint8_t new_if) {
+    IF = new_if & 0xE0;
+}
+
 void InterruptManager::disable_IME(){
-    pending_IME_enable = false;
+    pending_IME_enable_ = false;
     IME = false;
 }
 
-void InterruptManager::enable_IME(bool extra_cycle=false) {
+void InterruptManager::enable_IME(bool extra_cycle) {
     if(extra_cycle) {
-        pending_IME_enable = true;
+        pending_IME_enable_ = true;
         return;
     }
-    pending_IME_enable = false;
+    pending_IME_enable_ = false;
     IME = true;
 }

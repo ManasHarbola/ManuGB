@@ -4,10 +4,14 @@ DMG GameBoy CPU Emulation Implementation
 */
 
 #include <iostream>
+#include <memory>
 #include "../mmu/MMU.h"
 #include "../ppu/PPU.h"
 #include "../timer/Timer.h"
+#include "../Constants.h"
 #include "InterruptManager.h"
+
+class CPU;
 #include "InstructionHandler.h"
 
 #define ZERO (1 << 7)
@@ -59,6 +63,7 @@ struct registers {
 class CPU {
     public:
         CPU(MMU &mmu, PPU &ppu, Timer &timer, InterruptManager &int_manager);
+        virtual ~CPU();
 
         void init_registers();
         void check_for_interrupt();
@@ -70,15 +75,18 @@ class CPU {
         CPUState state_;
         MMU &mmu_;
         PPU &ppu_;
-        Timer& timer_;
-        InterruptManager& int_manager_;
+        Timer &timer_;
+        InterruptManager &int_manager_;
 
         friend class Instruction;
         
         uint8_t curr_inst_{0x00};
         bool inst_cb_prefixed_{false};
         bool halt_bug_{false};
-        Instruction *inst_{nullptr};
+        //Instruction *inst_{nullptr};
+        //Instruction inst_;//{Instruction::get_instruction(false, 0x00)};
+        std::unique_ptr<Instruction> inst_;
+        bool inst_finished_{false};
 
         uint32_t total_t_cycles_{0};
         uint8_t t_cycle_lock_{0};
