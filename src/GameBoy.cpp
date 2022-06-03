@@ -39,7 +39,7 @@ int GameBoy::run() {
             //get start time from SDL
             //auto start = SDL_GetPerformanceCounter();
 
-            //high_resolution_clock::time_point start = high_resolution_clock::now();
+            high_resolution_clock::time_point start = high_resolution_clock::now();
 
             //joypad_.update_state();
 
@@ -52,27 +52,16 @@ int GameBoy::run() {
             //auto end = SDL_GetPerformanceCounter();
             //auto elapsed = (end - start)....
             
-            //high_resolution_clock::time_point end = high_resolution_clock::now();
-
-            //duration<double, std::milli> time_span = end - start;
-            
-
+            high_resolution_clock::time_point end = high_resolution_clock::now();
+            duration<double, std::milli> time_span = end - start;
             //60 frames / sec -> 16.66666 ms / frame
-            //double wait_msec = (1000.0 / 60.0) - time_span.count();
+            double wait_msec = (1000.0 / 60.0) - time_span.count();
 
             //std::cout << "It took " << wait_msec << "ms to perform " << CYCLES_PER_FRAME << " t-cycles" << std::endl;
-            /*
             if (wait_msec > 0) {
                 sleep_for(microseconds((int) (wait_msec * 1000)));
             }
-            */
 
-            //delay remaining period of time to limit frame rate
-            /*
-            if (elasped > 1.0 / 60) {
-                delay((1.0 / 60) - elapsed);
-            }
-            */
         }
     }
 

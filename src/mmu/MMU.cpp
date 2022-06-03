@@ -63,7 +63,7 @@ bool MMU::load_rom(const std::string &rom_path) {
     mem_[0xFF41] = 0x81;	
     mem_[0xFF42] = 0x00;	
     mem_[0xFF43] = 0x00;	
-    mem_[0xFF44] = 0x91;	
+    mem_[0xFF44] = 0x00;	
     mem_[0xFF45] = 0x00;	
     mem_[0xFF46] = 0xFF;	
     mem_[0xFF47] = 0xFC;	
@@ -135,7 +135,6 @@ void MMU::write(uint16_t addr, uint8_t val) {
             int_manager_.set_IE(val);
             break;
         case 0xFF0F:
-            //return int_manager_.get_IF();
             int_manager_.set_IF(val);
             break;
         default:

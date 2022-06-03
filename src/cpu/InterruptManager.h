@@ -18,6 +18,7 @@ public:
     bool halt_bug_encountered();
     InterruptType get_requested_interrupt();
     void request_interrupt(InterruptType interrupt);
+    void clear_interrupt(InterruptType interrupt);
     void disable_IME();
     void set_IE(uint8_t ie);
     void set_IF(uint8_t new_if);

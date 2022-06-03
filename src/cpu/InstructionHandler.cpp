@@ -757,11 +757,9 @@ void Instruction::ld_HL_SP_r8_2(CPU &cpu) {
 
     cpu.registers_.f &= ~ZERO;
     cpu.registers_.f &= ~SUB;
-
-    if (((cpu.registers_.sp ^ r8 ^ sum) & 0x100) == 0x100)
-        cpu.registers_.f |= CARRY;
-    if (((cpu.registers_.sp ^ r8 ^ sum) & 0x10) == 0x10)
-        cpu.registers_.f |= HALF_CARRY;
+    
+    cpu.registers_.f = ((sum & 0x0F) < (cpu.registers_.sp & 0x0F)) ? (cpu.registers_.f | HALF_CARRY) : (cpu.registers_.f & ~HALF_CARRY);
+    cpu.registers_.f = ((sum & 0xFF) < (cpu.registers_.sp & 0xFF)) ? (cpu.registers_.f | CARRY) : (cpu.registers_.f & ~CARRY);
     cpu.registers_.hl = sum;
 }
 
@@ -791,19 +789,18 @@ void Instruction::pop_rr_2(CPU &cpu, uint16_t &rr) {
 }
 
 //ADD A, r
-void Instruction::add_A_r(CPU &cpu, uint8_t r){
-    cpu.registers_.f &= ~SUB;
-    uint8_t res = cpu.registers_.a + r;
+void Instruction::add_A_r(CPU &cpu, uint8_t r) {
+    uint8_t flag = cpu.registers_.f;
+    flag &= ~SUB;
+    uint16_t res = ((uint16_t) cpu.registers_.a) + ((uint16_t) r);
     //update zero flag
-    if (res == 0)
-        cpu.registers_.f |= ZERO;
+    flag = ((res & 0x00FF) == 0) ? (flag | ZERO) : (flag & ~ZERO);
     //update half carry
-    if (((cpu.registers_.a & 0x0F) + (r & 0x0F)) > 0x0F)
-        cpu.registers_.f |= HALF_CARRY;
+    flag = (((cpu.registers_.a & 0x0F) + (r & 0x0F)) > 0x0F) ? (flag | HALF_CARRY) : (flag & ~HALF_CARRY);
     //update carry
-    if (res & 0xFF00)
-        cpu.registers_.f |= CARRY;
-    cpu.registers_.a = res;
+    flag = (res & 0xFF00) ? (flag | CARRY) : (flag & ~CARRY);
+    cpu.registers_.a = (uint8_t) (res & 0x00FF);
+    cpu.registers_.f = flag;
 }
 //ADD A, n
 void Instruction::add_A_n(CPU &cpu){
@@ -842,7 +839,7 @@ void Instruction::add_HL_rr(CPU &cpu, uint16_t rr) {
 //ADC A, r
 void Instruction::adc_A_r(CPU &cpu, uint8_t r){
     uint8_t carry = (cpu.registers_.f & CARRY) ? 1 : 0;
-    uint16_t result = cpu.registers_.a + r + carry;
+    uint16_t result = ((uint16_t ) cpu.registers_.a) + ((uint16_t) r) + ((uint16_t) carry);
 
     cpu.registers_.f &= ~SUB;
     cpu.registers_.f = (result & 0xFF00) ? (cpu.registers_.f | CARRY) : (cpu.registers_.f & ~CARRY);
@@ -861,12 +858,13 @@ void Instruction::adc_A_HL(CPU &cpu){
 }
 //SUB r
 void Instruction::sub_r(CPU &cpu, uint8_t r){
-    uint16_t res = cpu.registers_.a - r;
+    //uint16_t res = cpu.registers_.a - r;
+    int res = (cpu.registers_.a - r) & 0xFF;
     cpu.registers_.f = (res == 0) ? (cpu.registers_.f | ZERO) : (cpu.registers_.f & ~ZERO);
     cpu.registers_.f |= SUB;
     cpu.registers_.f = ((r & 0x0F) > (cpu.registers_.a & 0x0F)) ? (cpu.registers_.f | HALF_CARRY) : (cpu.registers_.f & ~HALF_CARRY);
-    cpu.registers_.f = (res >> 8 != 0) ? (cpu.registers_.f | CARRY) : (cpu.registers_.f & ~CARRY);
-    cpu.registers_.a = (uint8_t)(res & 0x00FF);
+    cpu.registers_.f = (cpu.registers_.a < r) ? (cpu.registers_.f | CARRY) : (cpu.registers_.f & ~CARRY);
+    cpu.registers_.a = (uint8_t) res;
 }
 //SUB n
 void Instruction::sub_n(CPU &cpu){
@@ -879,16 +877,17 @@ void Instruction::sub_HL(CPU &cpu){
 //SBC A, r
 void Instruction::sbc_r(CPU &cpu, uint8_t r) {
     uint8_t carry = (cpu.registers_.f & CARRY) ? 1 : 0;
-    uint16_t res = cpu.registers_.a - r - carry;
-    cpu.registers_.f = (res == 0) ? (cpu.registers_.f | ZERO) : (cpu.registers_.f | ~ZERO);
+    int res = cpu.registers_.a - r - carry;
     cpu.registers_.f |= SUB;
-    if (((cpu.registers_.a ^ r ^ (res & 0xFF)) & (1 << 4)) != 0) {
-        cpu.registers_.h |= HALF_CARRY;
-    } else {
-        cpu.registers_.h &= ~HALF_CARRY;
-    }
     cpu.registers_.f = (res < 0) ? (cpu.registers_.f | CARRY) : (cpu.registers_.f & ~CARRY);
-    cpu.registers_.a = (uint8_t) (res & 0xFF);
+    res &= 0xFF;
+    cpu.registers_.f = (res == 0) ? (cpu.registers_.f | ZERO) : (cpu.registers_.f & ~ZERO);
+    if (((cpu.registers_.a ^ r ^ res) & (1 << 4)) != 0) {
+        cpu.registers_.f |= HALF_CARRY;
+    } else {
+        cpu.registers_.f &= ~HALF_CARRY;
+    }
+    cpu.registers_.a = res;
 }
 //SBC A, n
 void Instruction::sbc_n(CPU &cpu){
@@ -901,10 +900,9 @@ void Instruction::sbc_A_HL(CPU &cpu){
 //AND r
 void Instruction::and_r(CPU &cpu, uint8_t r){
     cpu.registers_.a &= r;
+    cpu.registers_.f &= ~(SUB | CARRY);
     cpu.registers_.f = (cpu.registers_.a == 0) ? (cpu.registers_.f | ZERO) : (cpu.registers_.f & ~ZERO);
-    cpu.registers_.f &= (~SUB);
     cpu.registers_.f |= HALF_CARRY;
-    cpu.registers_.f &= (~CARRY);
 }
 //AND n
 void Instruction::and_n(CPU &cpu){
@@ -944,11 +942,12 @@ void Instruction::or_HL(CPU &cpu){
 }
 //CP r
 void Instruction::cp_r(CPU &cpu, uint8_t r){
-    uint16_t res = cpu.registers_.a - r;
-    cpu.registers_.f = (res == 0) ? (cpu.registers_.f | ZERO) : (cpu.registers_.f & ~ZERO);
+    int res = (cpu.registers_.a - r) & 0xFF;
+
     cpu.registers_.f |= SUB;
+    cpu.registers_.f = (res == 0) ? (cpu.registers_.f | ZERO) : (cpu.registers_.f & ~ZERO);
     cpu.registers_.f = ((r & 0x0F) > (cpu.registers_.a & 0x0F)) ? (cpu.registers_.f | HALF_CARRY) : (cpu.registers_.f & ~HALF_CARRY);
-    cpu.registers_.f = (res >> 8 != 0) ? (cpu.registers_.f | CARRY) : (cpu.registers_.f & ~CARRY);
+    cpu.registers_.f = (cpu.registers_.a < r) ? (cpu.registers_.f | CARRY) : (cpu.registers_.f & ~CARRY);
 }
 //CP n
 void Instruction::cp_n(CPU &cpu){
@@ -974,6 +973,7 @@ void Instruction::inc_HL_1(CPU &cpu) {
     cpu.n_ = cpu.mmu_.read(cpu.registers_.hl); 
 }
 void Instruction::inc_HL_2(CPU &cpu) {
+    cpu.registers_.f &= (~SUB);
     cpu.registers_.f = ((cpu.n_ & 0x0F) == 0x0F) ? (cpu.registers_.f | HALF_CARRY) : (cpu.registers_.f & ~HALF_CARRY);
     cpu.n_++;
     cpu.registers_.f = (cpu.n_ == 0) ? (cpu.registers_.f | ZERO) : (cpu.registers_.f & ~ZERO);
@@ -1003,25 +1003,25 @@ void Instruction::dec_HL_2(CPU &cpu) {
 }
 //DAA
 void Instruction::daa(CPU &cpu){
-    int a = cpu.registers_.a;
-    if (cpu.registers_.f & SUB) {
-        if (cpu.registers_.f & HALF_CARRY)
-            a = (a - 6) & 0xFF;
-        if (cpu.registers_.f & CARRY)
-            a -= 0x60;
-    } else {
-        if ((cpu.registers_.f & HALF_CARRY) || ((a & 0xF) > 9))
-            a += 0x06;
-        if ((cpu.registers_.f & CARRY) || (a > 0x9F))
+    uint8_t a = cpu.registers_.a;
+    uint8_t flag = cpu.registers_.f;
+    if ((flag & SUB) == 0) {
+        if ((flag & CARRY) || a > 0x99) {
             a += 0x60;
+            flag |= CARRY;
+        }
+        if ((flag & HALF_CARRY) || (a & 0x0F) > 0x09)
+            a += 0x6;
+    } else {
+        if (flag & CARRY)
+            a -= 0x60;
+        if (flag & HALF_CARRY)
+            a -= 0x6;
     }
-    cpu.registers_.f &= ~(HALF_CARRY | ZERO);
-    if ((a & 0x100) == 0x100)
-        cpu.registers_.f |= CARRY;
-    a &= 0xFF;
-    if (a == 0)
-        cpu.registers_.f |= ZERO;
-    cpu.registers_.a = (uint8_t) a;
+    flag = (a == 0) ? (flag | ZERO) : (flag & ~ZERO);
+    flag &= ~HALF_CARRY;
+    cpu.registers_.a = a;
+    cpu.registers_.f = flag;
 }
 //CPL
 void Instruction::cpl(CPU &cpu){
@@ -1262,7 +1262,7 @@ void Instruction::set_n_HL_1(CPU &cpu, uint8_t bit_pos) {
     cpu.n_ = cpu.mmu_.read(cpu.registers_.hl) | (1 << bit_pos);
 }
 void Instruction::set_n_HL_2(CPU &cpu) {
-    cpu.mmu_.write(cpu.registers_.hl, cpu.mmu_.read(cpu.n_));
+    cpu.mmu_.write(cpu.registers_.hl, cpu.n_);
 }
 //RES n, r
 void Instruction::res_n_r(uint8_t bit_pos, uint8_t &r) {
@@ -1273,11 +1273,11 @@ void Instruction::res_n_HL_1(CPU &cpu, uint8_t bit_pos) {
     cpu.n_ = cpu.mmu_.read(cpu.registers_.hl) & ~(1 << bit_pos);
 }
 void Instruction::res_n_HL_2(CPU &cpu) {
-    cpu.mmu_.write(cpu.registers_.hl, cpu.mmu_.read(cpu.n_));
+    cpu.mmu_.write(cpu.registers_.hl, cpu.n_);
 }
 //SWAP r
 void Instruction::swap_r(CPU &cpu, uint8_t &r) {
-    r = (r << 8) | (r >> 8);
+    r = (r << 4) | (r >> 4);
     cpu.registers_.f = 0;
     if (r == 0)
         cpu.registers_.f |= ZERO;
@@ -1337,11 +1337,20 @@ void Instruction::sra_HL_2(CPU &cpu) {
 }
 //RL r
 void Instruction::rl_r(CPU &cpu, uint8_t &r) {
+    /*
     bool c = (r & 0x80);
     r = (r << 1) | ((cpu.registers_.f & CARRY) ? 1 : 0);
     cpu.registers_.f = 0;
     cpu.registers_.f |= (r == 0) ? ZERO : 0;
     cpu.registers_.f |= (c) ? CARRY : 0;
+    */
+    uint8_t res = r << 1;
+    if (cpu.registers_.f & CARRY)
+        res |= 1;
+    cpu.registers_.f &= ~(SUB | HALF_CARRY);
+    cpu.registers_.f = (r & 0x80) ? (cpu.registers_.f | CARRY) : (cpu.registers_.f & ~CARRY);
+    cpu.registers_.f = (res == 0) ? (cpu.registers_.f | ZERO) : (cpu.registers_.f & ~ZERO);
+    r = res;
 }
 //RL (HL)
 void Instruction::rl_HL_1(CPU &cpu) {
@@ -1353,11 +1362,13 @@ void Instruction::rl_HL_2(CPU &cpu) {
 }
 //RR r
 void Instruction::rr_r(CPU &cpu, uint8_t &r) {
-    bool c = (r & 1);
-    r = (r >> 1) | ((cpu.registers_.f & CARRY) ? (1 << 7) : 0);
-    cpu.registers_.f = 0;
-    cpu.registers_.f |= (r == 0) ? ZERO : 0;
-    cpu.registers_.f |= (c) ? CARRY : 0;
+    uint8_t res = r >> 1;
+    if (cpu.registers_.f & CARRY)
+        res |= 0x80;
+    cpu.registers_.f &= ~(SUB | HALF_CARRY);
+    cpu.registers_.f = (r & 1) ? (cpu.registers_.f | CARRY) : (cpu.registers_.f & ~CARRY);
+    cpu.registers_.f = (res == 0) ? (cpu.registers_.f | ZERO) : (cpu.registers_.f & ~ZERO);
+    r = res;
 }
 //RR (HL)
 void Instruction::rr_HL_1(CPU &cpu) {
@@ -1369,11 +1380,16 @@ void Instruction::rr_HL_2(CPU &cpu) {
 }
 //RLC r
 void Instruction::rlc_r(CPU &cpu, uint8_t &r) {
-    bool c = (r & (1 << 7));
-    r = (r << 1) | ((r & 0x80) >> 7);
-    cpu.registers_.f = 0;
-    cpu.registers_.f |= (r == 0) ? ZERO : 0;
-    cpu.registers_.f |= (c) ? CARRY : 0;
+    cpu.registers_.f &= ~(SUB | HALF_CARRY);
+    uint8_t res = r << 1;
+    if (r & (1 << 7)) {
+        cpu.registers_.f |= CARRY;
+        res |= 1;
+    } else {
+        cpu.registers_.f &= ~(CARRY);
+    }
+    cpu.registers_.f = (res == 0) ? (cpu.registers_.f | ZERO) : (cpu.registers_.f & ~ZERO);
+    r = res;
 }
 //RLC (HL)
 void Instruction::rlc_HL_1(CPU &cpu) {
@@ -1385,11 +1401,16 @@ void Instruction::rlc_HL_2(CPU &cpu) {
 }
 //RRC r
 void Instruction::rrc_r(CPU &cpu, uint8_t &r) {
-    bool c = (r & 1);
-    r = (r >> 1) | ((r & 1) << 7);
-    cpu.registers_.f = 0;
-    cpu.registers_.f |= (r == 0) ? ZERO : 0;
-    cpu.registers_.f |= (c) ? CARRY : 0;
+    uint8_t res = r >> 1;
+    cpu.registers_.f &= ~(SUB | HALF_CARRY);
+    if (r & 1) {
+        cpu.registers_.f |= CARRY;
+        res |= 0x80;
+    } else {
+        cpu.registers_.f &= ~CARRY;
+    }
+    cpu.registers_.f = (res == 0) ? (cpu.registers_.f | ZERO) : (cpu.registers_.f & ~ZERO);
+    r = res;
 }
 //RRC (HL)
 void Instruction::rrc_HL_1(CPU &cpu) {

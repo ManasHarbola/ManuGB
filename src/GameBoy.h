@@ -27,17 +27,16 @@ class GameBoy {
         //steps all our hardware by 1 t-cycle    
         int step();    
     private:
-        CPU cpu_;
-        
-        PPU ppu_;
+        InterruptManager int_manager_;
         Timer timer_;
-        //ControlManager joypad_;
+        PPU ppu_;
         MMU mmu_;
+        CPU cpu_;
+        //ControlManager joypad_;
         /*
         DMA dma_;
         Serial port_;
         */
-        InterruptManager int_manager_;
 
         bool rom_loaded_{false};
         bool paused_{false};

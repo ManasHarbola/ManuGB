@@ -1,4 +1,5 @@
 #include "CPU.h"
+#include <iomanip>
 
 CPU::CPU(MMU &mmu, PPU &ppu, Timer &timer, InterruptManager &int_manager) :
 mmu_(mmu), ppu_(ppu), timer_(timer),
@@ -60,8 +61,28 @@ void CPU::tick() {
                 int_manager_.enable_IME();
             }
             
+            //for debugging purposes - remove later
+            if (registers_.pc == desired_pc) {
+                desired_pc_count++;
+                std::cout << "\nreached non-prefixed pc " << (int) desired_pc << " "
+                          << (unsigned int) desired_pc_count << std::endl;
+            }
+
             //get instruction at pc and increment pc
             curr_inst_ = mmu_.read(registers_.pc++);
+
+            /*
+            if (prev_pc != registers_.pc - 1) {
+            //for debugging backtrace
+            std::cout << "Fetched at pc = 0x" << std::hex << std::uppercase 
+                      << (unsigned int) registers_.pc-1 << " instruction 0x"
+                      << (unsigned int) curr_inst_ << std::dec << std::nouppercase
+                      << std::endl;
+            }
+            */
+            
+            prev_pc = registers_.pc - 1;
+
             //check if this is 0xCB-prefixed instruction
             if (curr_inst_ == 0xCB) {
                 state_ = FETCH_CB;
@@ -153,6 +174,8 @@ void CPU::tick() {
             //set PC to ISR address execute interrupt
             InterruptType requested_int = int_manager_.get_requested_interrupt();
             registers_.pc = InterruptManager::isr_addrs.at(requested_int);
+            //clear interrupt because it will be handled
+            int_manager_.clear_interrupt(requested_int);
             state_ = FETCH;
             break;
         }

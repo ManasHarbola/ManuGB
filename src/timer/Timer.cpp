@@ -80,7 +80,7 @@ void Timer::inc_tima() {
 void Timer::set_div(uint16_t div) {
     div_ = div;
     uint8_t pos = falling_edge_bit[tac_ & 0x3];
-    bool bit_val = (div_ & (1 << pos));
+    bool bit_val = (div_ & (1 << pos)) != 0;
     //check for falling edge (prev_bit was 1 and bit_val is 0)
     if (!bit_val && prev_bit_) {
         inc_tima();

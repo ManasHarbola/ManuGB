@@ -98,4 +98,8 @@ class CPU {
         uint16_t nn_{0};
         uint16_t addr_{0};
         uint16_t res_{0};
+
+        uint16_t desired_pc = 0xc435;
+        uint16_t desired_pc_count = 0;
+        uint16_t prev_pc;
 };
