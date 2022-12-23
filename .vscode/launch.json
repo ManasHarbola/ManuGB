@@ -7,9 +7,18 @@
         {
             "type": "lldb",
             "request": "launch",
-            "name": "Debug ManuGB",
+            "name": "02-interrupts Test",
             "program": "${workspaceFolder}/ManuGB",
-            "args": ["01-special.gb"],
+            "args": ["gb-test-roms/individual_pool/02-interrupts.gb"],
+            "cwd": "${workspaceFolder}",
+            "MIMode": "lldb"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "instr_timing Test",
+            "program": "${workspaceFolder}/ManuGB",
+            "args": ["gb-test-roms/individual_pool/instr_timing.gb"],
             "cwd": "${workspaceFolder}",
             "MIMode": "lldb"
         }
