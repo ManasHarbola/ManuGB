@@ -1,12 +1,12 @@
 #pragma once
 
+#include "../Logging.h"
 #include <unordered_map>
 #include <memory>
 #include <functional>
 #include <vector>
 #include <iterator>
 #include "../Constants.h"
-//#include "CPU.h"
 class Instruction;
 #include "CPU.h"
 
@@ -244,20 +244,26 @@ private:
 
     //8-bit shift, rotate and bit instructions
     //BIT n, r
-    static void bit_n_r(CPU &cpu, uint8_t bit_pos, uint8_t &r);
+    //static void bit_n_r(CPU &cpu, uint8_t bit_pos, uint8_t &r);
+    template<uint8_t bit_pos>
+    static void bit_r(CPU& cpu, uint8_t& r);
     //BIT n, (HL)
-    static void bit_n_HL_1(CPU &cpu, uint8_t bit_pos);
-    static void bit_n_HL_2(CPU &cpu);
+    template<uint8_t bit_pos>
+    static void bit_HL(CPU &cpu);
     //SET n, r
-    static void set_n_r(uint8_t bit_pos, uint8_t &r);
+    template<uint8_t bit_pos>
+    static void set_r(uint8_t &r);
     //SET n, (HL)
-    static void set_n_HL_1(CPU &cpu, uint8_t bit_pos);
-    static void set_n_HL_2(CPU &cpu);
+    template<uint8_t bit_pos>
+    static void set_HL_1(CPU &cpu);
+    static void set_HL_2(CPU &cpu);
     //RES n, r
-    static void res_n_r(uint8_t bit_pos, uint8_t &r);
+    template<uint8_t bit_pos>
+    static void res_r(uint8_t &r);
     //RES n, (HL)
-    static void res_n_HL_1(CPU &cpu, uint8_t bit_pos);
-    static void res_n_HL_2(CPU &cpu);
+    template<uint8_t bit_pos>
+    static void res_HL_1(CPU &cpu);
+    static void res_HL_2(CPU &cpu);
     //SWAP r
     static void swap_r(CPU &cpu, uint8_t &r);
     //SWAP (HL)
@@ -588,66 +594,6 @@ private:
     static void rst_38h_3(CPU &cpu);
 
     //0xCB prefixed instructions
-    //0x
-    static void rlc_b(CPU &cpu);
-    static void rlc_c(CPU &cpu);
-    static void rlc_d(CPU &cpu);
-    static void rlc_e(CPU &cpu);
-    static void rlc_h(CPU &cpu);
-    static void rlc_l(CPU &cpu);
-    static void rlc_a(CPU &cpu);
-    static void rrc_b(CPU &cpu);
-    static void rrc_c(CPU &cpu);
-    static void rrc_d(CPU &cpu);
-    static void rrc_e(CPU &cpu);
-    static void rrc_h(CPU &cpu);
-    static void rrc_l(CPU &cpu);
-    static void rrc_a(CPU &cpu);
-    //1x
-    static void rl_b(CPU &cpu);
-    static void rl_c(CPU &cpu);
-    static void rl_d(CPU &cpu);
-    static void rl_e(CPU &cpu);
-    static void rl_h(CPU &cpu);
-    static void rl_l(CPU &cpu);
-    static void rl_a(CPU &cpu);
-    static void rr_b(CPU &cpu);
-    static void rr_c(CPU &cpu);
-    static void rr_d(CPU &cpu);
-    static void rr_e(CPU &cpu);
-    static void rr_h(CPU &cpu);
-    static void rr_l(CPU &cpu);
-    static void rr_a(CPU &cpu);
-    //2x
-    static void sla_b(CPU &cpu);
-    static void sla_c(CPU &cpu);
-    static void sla_d(CPU &cpu);
-    static void sla_e(CPU &cpu);
-    static void sla_h(CPU &cpu);
-    static void sla_l(CPU &cpu);
-    static void sla_a(CPU &cpu);
-    static void sra_b(CPU &cpu);
-    static void sra_c(CPU &cpu);
-    static void sra_d(CPU &cpu);
-    static void sra_e(CPU &cpu);
-    static void sra_h(CPU &cpu);
-    static void sra_l(CPU &cpu);
-    static void sra_a(CPU &cpu);
-    //3x
-    static void swap_b(CPU &cpu);
-    static void swap_c(CPU &cpu);
-    static void swap_d(CPU &cpu);
-    static void swap_e(CPU &cpu);
-    static void swap_h(CPU &cpu);
-    static void swap_l(CPU &cpu);
-    static void swap_a(CPU &cpu);
-    static void srl_b(CPU &cpu);
-    static void srl_c(CPU &cpu);
-    static void srl_d(CPU &cpu);
-    static void srl_e(CPU &cpu);
-    static void srl_h(CPU &cpu);
-    static void srl_l(CPU &cpu);
-    static void srl_a(CPU &cpu);
     //4x
     static void bit_0_b(CPU &cpu);
     static void bit_0_c(CPU &cpu);
@@ -657,6 +603,7 @@ private:
     static void bit_0_l(CPU &cpu);
     static void bit_0_HL_1(CPU &cpu);
     static void bit_0_HL_2(CPU &cpu);
+    static void bit_0_HL(CPU &cpu);
     static void bit_0_a(CPU &cpu);
     static void bit_1_b(CPU &cpu);
     static void bit_1_c(CPU &cpu);
@@ -666,6 +613,7 @@ private:
     static void bit_1_l(CPU &cpu);
     static void bit_1_HL_1(CPU &cpu);
     static void bit_1_HL_2(CPU &cpu);
+    static void bit_1_HL(CPU &cpu);
     static void bit_1_a(CPU &cpu);
     //5x
     static void bit_2_b(CPU &cpu);
@@ -676,6 +624,7 @@ private:
     static void bit_2_l(CPU &cpu);
     static void bit_2_HL_1(CPU &cpu);
     static void bit_2_HL_2(CPU &cpu);
+    static void bit_2_HL(CPU &cpu);
     static void bit_2_a(CPU &cpu);
     static void bit_3_b(CPU &cpu);
     static void bit_3_c(CPU &cpu);
@@ -685,6 +634,7 @@ private:
     static void bit_3_l(CPU &cpu);
     static void bit_3_HL_1(CPU &cpu);
     static void bit_3_HL_2(CPU &cpu);
+    static void bit_3_HL(CPU &cpu);
     static void bit_3_a(CPU &cpu);
     //6x
     static void bit_4_b(CPU &cpu);
@@ -695,6 +645,7 @@ private:
     static void bit_4_l(CPU &cpu);
     static void bit_4_HL_1(CPU &cpu);
     static void bit_4_HL_2(CPU &cpu);
+    static void bit_4_HL(CPU &cpu);
     static void bit_4_a(CPU &cpu);
     static void bit_5_b(CPU &cpu);
     static void bit_5_c(CPU &cpu);
@@ -704,6 +655,7 @@ private:
     static void bit_5_l(CPU &cpu);
     static void bit_5_HL_1(CPU &cpu);
     static void bit_5_HL_2(CPU &cpu);
+    static void bit_5_HL(CPU &cpu);
     static void bit_5_a(CPU &cpu);
     //7x
     static void bit_6_b(CPU &cpu);
@@ -714,6 +666,7 @@ private:
     static void bit_6_l(CPU &cpu);
     static void bit_6_HL_1(CPU &cpu);
     static void bit_6_HL_2(CPU &cpu);
+    static void bit_6_HL(CPU &cpu);
     static void bit_6_a(CPU &cpu);
     static void bit_7_b(CPU &cpu);
     static void bit_7_c(CPU &cpu);
@@ -723,6 +676,7 @@ private:
     static void bit_7_l(CPU &cpu);
     static void bit_7_HL_1(CPU &cpu);
     static void bit_7_HL_2(CPU &cpu);
+    static void bit_7_HL(CPU &cpu);
     static void bit_7_a(CPU &cpu);
     //8x
     static void res_0_b(CPU &cpu);

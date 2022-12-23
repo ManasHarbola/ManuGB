@@ -1,5 +1,6 @@
 #pragma once
 
+#include "../Logging.h"
 #include "../Constants.h"
 #include <unordered_map>
 

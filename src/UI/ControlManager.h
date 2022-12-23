@@ -1,5 +1,7 @@
 #pragma once
 
+#include "../Logging.h"
+
 enum Buttons {
     UP = 0,
     DOWN = 1,
