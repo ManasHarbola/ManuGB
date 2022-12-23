@@ -3,8 +3,9 @@
 DMG GameBoy CPU Emulation Implementation
 */
 
-#include <iostream>
+#include "../Logging.h"
 #include <memory>
+#include <fstream>
 #include "../mmu/MMU.h"
 #include "../ppu/PPU.h"
 #include "../timer/Timer.h"
@@ -64,12 +65,12 @@ class CPU {
     public:
         CPU(MMU &mmu, PPU &ppu, Timer &timer, InterruptManager &int_manager);
         virtual ~CPU();
-
         void init_registers();
         void check_for_interrupt();
         void tick();
-        //useful for debugging
+        //useful methods for debugging
         registers get_registers() {return registers_;}
+        void write_state_to_log(std::ofstream& os);
     private:
         registers registers_;
         CPUState state_;
@@ -83,8 +84,7 @@ class CPU {
         uint8_t curr_inst_{0x00};
         bool inst_cb_prefixed_{false};
         bool halt_bug_{false};
-        //Instruction *inst_{nullptr};
-        //Instruction inst_;//{Instruction::get_instruction(false, 0x00)};
+        
         std::unique_ptr<Instruction> inst_;
         bool inst_finished_{false};
 
@@ -99,7 +99,7 @@ class CPU {
         uint16_t addr_{0};
         uint16_t res_{0};
 
-        uint16_t desired_pc = 0xc435;
+        uint16_t desired_pc = 0x0100;
         uint16_t desired_pc_count = 0;
         uint16_t prev_pc;
 };

@@ -1,17 +1,31 @@
 #include "CPU.h"
-#include <iomanip>
+#include <cstdio>
 
 CPU::CPU(MMU &mmu, PPU &ppu, Timer &timer, InterruptManager &int_manager) :
 mmu_(mmu), ppu_(ppu), timer_(timer),
-int_manager_(int_manager) {
-
+state_(CPUState::FETCH), int_manager_(int_manager) {
     //initialize registers to start values
     init_registers();
-    state_ = FETCH;
 }
 
 CPU::~CPU() {
 
+}
+
+void CPU::write_state_to_log(std::ofstream& os) {
+    if (os.is_open()) {
+        //"A:01 F:B0 B:00 C:13 D:00 E:D8 H:01 L:4D SP:FFFE PC:0100 PCMEM:00,C3,13,02";
+        char buf[74];
+        snprintf(buf, 74,
+                 "A:%02X F:%02X B:%02X C:%02X D:%02X E:%02X H:%02X L:%02X SP:%04X PC:%04X PCMEM:%02X,%02X,%02X,%02X",
+                 registers_.a, registers_.f, registers_.b,
+                 registers_.c, registers_.d, registers_.e,
+                 registers_.h, registers_.l, registers_.sp,
+                 registers_.pc,
+                 mmu_.read(registers_.pc), mmu_.read(registers_.pc+1),
+                 mmu_.read(registers_.pc+2), mmu_.read(registers_.pc+3));
+        os << std::string(buf) << std::endl;   
+    }
 }
 
 void CPU::init_registers() {
@@ -27,7 +41,6 @@ void CPU::init_registers() {
 void CPU::check_for_interrupt() {
     //reset inst_finished_ flag to false
     inst_finished_ = false;
-
     //check if IME is enabled and interrupt was requested
     if (int_manager_.get_IME() && int_manager_.interrupt_requested()) {
         //disable IME so no other interrupts are serviced at this time
@@ -70,17 +83,6 @@ void CPU::tick() {
 
             //get instruction at pc and increment pc
             curr_inst_ = mmu_.read(registers_.pc++);
-
-            /*
-            if (prev_pc != registers_.pc - 1) {
-            //for debugging backtrace
-            std::cout << "Fetched at pc = 0x" << std::hex << std::uppercase 
-                      << (unsigned int) registers_.pc-1 << " instruction 0x"
-                      << (unsigned int) curr_inst_ << std::dec << std::nouppercase
-                      << std::endl;
-            }
-            */
-            
             prev_pc = registers_.pc - 1;
 
             //check if this is 0xCB-prefixed instruction
@@ -140,7 +142,6 @@ void CPU::tick() {
         case DECODE_EXECUTE:
         {
             inst_->execute(*this);
-            //if (inst_.finished())
             if (inst_finished_)
                 check_for_interrupt();
             break;
