@@ -4,7 +4,7 @@
 #include "../Constants.h"
 #include <unordered_map>
 
-enum InterruptType {
+enum InterruptType : uint8_t {
     NONE = 0x00,
     VBLANK = 0x01,
     LCDSTAT = 0x02,

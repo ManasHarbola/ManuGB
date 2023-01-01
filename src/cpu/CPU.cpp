@@ -1,9 +1,9 @@
-#include "CPU.h"
+#include <cpu/CPU.h>
 #include <cstdio>
 
 CPU::CPU(MMU &mmu, PPU &ppu, Timer &timer, InterruptManager &int_manager) :
-mmu_(mmu), ppu_(ppu), timer_(timer),
-state_(CPUState::FETCH), int_manager_(int_manager) {
+state_(CPUState::FETCH), mmu_(mmu), ppu_(ppu),
+timer_(timer), int_manager_(int_manager) {
     //initialize registers to start values
     init_registers();
 }
@@ -74,12 +74,14 @@ void CPU::tick() {
                 int_manager_.enable_IME();
             }
             
+            /*
             //for debugging purposes - remove later
             if (registers_.pc == desired_pc) {
                 desired_pc_count++;
                 std::cout << "\nreached non-prefixed pc " << (int) desired_pc << " "
                           << (unsigned int) desired_pc_count << std::endl;
             }
+            */
 
             //get instruction at pc and increment pc
             curr_inst_ = mmu_.read(registers_.pc++);
