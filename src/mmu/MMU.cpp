@@ -25,7 +25,7 @@ bool MMU::load_rom(const std::string& rom_path) {
     rom_file.close();
 
     //copy first 32k of rom onto mem_
-    std::copy(cart_, cart_ + 0x8000, rom_);
+    std::copy(cart_, cart_ + 32_kb, rom_);
 
     //set initial values of hardware registers
     //TODO: clean this up lol
