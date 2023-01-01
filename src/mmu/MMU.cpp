@@ -137,7 +137,8 @@ uint8_t MMU::read(uint16_t addr) {
     //Additionally IE register at 0xFFFF
     switch(addr) {
         case 0xFF00:
-            return P1_;
+            //return P1_;
+            return 0xFF;
         case 0xFF01:
             return SB_;
         case 0xFF02:
