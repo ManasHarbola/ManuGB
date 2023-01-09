@@ -18,7 +18,7 @@ int main(int argc, char **argv) {
         return -1;
     }    
 
-    std::string rom_path = "./tests/";
+    std::string rom_path = "./";
 
     rom_path += std::string(argv[1]);
 

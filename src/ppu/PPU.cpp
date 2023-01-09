@@ -72,7 +72,7 @@ uint8_t PPU::read(uint16_t addr) {
     if (addr >= 0x8000 && addr < 0xA000 && vram_accessible())
         return vram_[addr - 0x8000];
     //OAM read - allowed when PPU not in OAM_FETCH or PIXEL_TRANSFER mode
-    if (addr >= 0xFE00 && addr < 0xFFA0 && oam_accessible())
+    if (addr >= 0xFE00 && addr < 0xFEA0 && oam_accessible())
         return oam_[addr - 0xFE00];
         
     //PPU Registers        
@@ -111,7 +111,7 @@ void PPU::write(uint16_t addr, uint8_t val) {
         vram_[addr - 0x8000] = val;
         return;
     //OAM write
-    if (addr >= 0xFE00 && addr < 0xFFA0 && oam_accessible())
+    if (addr >= 0xFE00 && addr < 0xFEA0 && oam_accessible())
         oam_[addr - 0xFE00] = val;
         return;
     //PPU Registers

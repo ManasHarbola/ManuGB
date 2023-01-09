@@ -74,14 +74,12 @@ void CPU::tick() {
                 int_manager_.enable_IME();
             }
             
-            /*
             //for debugging purposes - remove later
             if (registers_.pc == desired_pc) {
                 desired_pc_count++;
                 std::cout << "\nreached non-prefixed pc " << (int) desired_pc << " "
                           << (unsigned int) desired_pc_count << std::endl;
             }
-            */
 
             //get instruction at pc and increment pc
             curr_inst_ = mmu_.read(registers_.pc++);
