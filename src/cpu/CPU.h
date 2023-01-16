@@ -3,22 +3,17 @@
 DMG GameBoy CPU Emulation Implementation
 */
 
-#include "../Logging.h"
+#include <Logging.h>
 #include <memory>
 #include <fstream>
-#include "../mmu/MMU.h"
-#include "../ppu/PPU.h"
-#include "../timer/Timer.h"
-#include "../Constants.h"
-#include "InterruptManager.h"
+#include <mmu/MMU.h>
+#include <ppu/PPU.h>
+#include <timer/Timer.h>
+#include <Constants.h>
+#include <cpu/InterruptManager.h>
 
 class CPU;
-#include "InstructionHandler.h"
-
-#define ZERO (1 << 7)
-#define SUB (1 << 6)
-#define HALF_CARRY (1 << 5)
-#define CARRY (1 << 4)
+#include <cpu/InstructionSet.h>
 
 enum CPUState {
     FETCH, FETCH_CB, DECODE_EXECUTE,
@@ -71,6 +66,7 @@ class CPU {
         //useful methods for debugging
         registers get_registers() {return registers_;}
         void write_state_to_log(std::ofstream& os);
+
     private:
         registers registers_;
         CPUState state_;

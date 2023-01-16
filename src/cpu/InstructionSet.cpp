@@ -1,4 +1,4 @@
-#include "InstructionHandler.h"
+#include "InstructionSet.h"
 
 Instruction::Instruction(uint8_t t_cycles, std::vector<std::function<void (CPU&)> > ops) :
 t_cycles_(t_cycles), ops_(ops), it_(ops_.begin()) {

@@ -10,13 +10,12 @@ make all --print-data-base --no-builtin-variables --no-builtin-rules --question
 make: *** No rule to make target `all'.  Stop.
 
 
-# Make data base, printed on Tue May 10 20:04:14 2022
+# Make data base, printed on Sun Jul 17 09:39:13 2022
 
 # Variables
 
 # automatic
 <D = $(patsubst %/,%,$(dir $<))
- 
 # automatic
 ?F = $(notdir $?)
 # makefile (from `Makefile', line 4)
@@ -31,6 +30,7 @@ VSCODE_LOG_NATIVE = false
 @F = $(notdir $@)
 # makefile
 CURDIR := /Users/manas/Documents/Projects/ManuGB
+ 
 # makefile
 SHELL = /bin/sh
 # environment
@@ -39,6 +39,8 @@ VSCODE_NLS_CONFIG = {"locale":"en-us","availableLanguages":{},"_languagePackSupp
 _ = /usr/bin/make
 # makefile (from `Makefile', line 1)
 MAKEFILE_LIST :=  Makefile
+# makefile (from `Makefile', line 5)
+VERSION = -std=c++14
 # environment
 VSCODE_VERBOSE_LOGGING = true
 # environment
@@ -46,11 +48,13 @@ __CFBundleIdentifier = com.microsoft.VSCode
 # environment
 INFOPATH = /opt/homebrew/share/info:
 # environment
-VSCODE_IPC_HOOK_EXTHOST = /var/folders/qb/y1tbczls1jq3tcnsg6h5cd700000gn/T/vscode-ipc-70fe46c0-89db-47d4-878f-b4d65f07bbb7.sock
+VSCODE_IPC_HOOK_EXTHOST = /var/folders/qb/y1tbczls1jq3tcnsg6h5cd700000gn/T/vscode-ipc-f3c3876b-c005-4793-9f11-37d039a4c758.sock
 # environment
 VSCODE_CWD = /
 # environment
 PATH = /Users/manas/miniconda3/condabin:/opt/homebrew/bin:/opt/homebrew/sbin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/Library/Apple/usr/bin
+# environment
+LaunchInstanceID = D2360071-C045-4E91-8C06-D797C74F3A46
 # environment
 VSCODE_LOG_STACK = false
 # environment
@@ -60,13 +64,15 @@ LIB = lib
 # default
 .FEATURES := target-specific order-only second-expansion else-if archives jobserver check-symlink
 # environment
-SSH_AUTH_SOCK = /private/tmp/com.apple.launchd.mRw2kvGEIz/Listeners
+SSH_AUTH_SOCK = /private/tmp/com.apple.launchd.zgJlJnRpZe/Listeners
 # automatic
 %F = $(notdir $%)
 # environment
 CONDA_EXE = /Users/manas/miniconda3/bin/conda
 # environment
 VSCODE_PIPE_LOGGING = true
+# makefile (from `Makefile', line 7)
+OBJS = CPU.o InstructionHandler.o InterruptManager.o MMU.o PPU.o Timer.o GameBoy.o Main.o
 # environment
 PWD = /Users/manas/Documents/Projects/ManuGB
 # environment
@@ -82,7 +88,7 @@ HOME = /Users/manas
 # default
 MAKEFILEPATH := /Applications/Xcode.app/Contents/Developer/Makefiles
 # environment
-VSCODE_CODE_CACHE_PATH = /Users/manas/Library/Application Support/Code/CachedData/57fd6d0195bb9b9d1b49f6da5db789060795de47
+VSCODE_CODE_CACHE_PATH = /Users/manas/Library/Application Support/Code/CachedData/30d9c6cd9483b2cc586687151bcbcd635f373630
 # environment
 LOGNAME = manas
 # environment
@@ -122,7 +128,7 @@ TMPDIR = /var/folders/qb/y1tbczls1jq3tcnsg6h5cd700000gn/T/
 # automatic
 *F = $(notdir $*)
 # environment
-VSCODE_IPC_HOOK = /Users/manas/Library/Application Support/Code/1.67.0-main.sock
+VSCODE_IPC_HOOK = /Users/manas/Library/Application Support/Code/1.68.1-main.sock
 # makefile
 MAKEFLAGS = Rrqp
 # environment
@@ -130,7 +136,7 @@ MFLAGS = -Rrqp
 # automatic
 *D = $(patsubst %/,%,$(dir $*))
 # environment
-XPC_SERVICE_NAME = application.com.microsoft.VSCode.19000059.19000065
+XPC_SERVICE_NAME = application.com.microsoft.VSCode.22980148.22980157
 # environment
 HOMEBREW_PREFIX = /opt/homebrew
 # automatic
@@ -151,6 +157,8 @@ MAKEFILES :=
 LC_ALL = C
 # environment
 CONDA_PYTHON_EXE = /Users/manas/miniconda3/bin/python
+# environment
+SECURITYSESSIONID = 186ac
 # automatic
 ^F = $(notdir $^)
 # default
@@ -158,16 +166,15 @@ SUFFIXES :=
 # environment
 _CE_M = 
 # environment
- 
 MAKELEVEL := 0
 # environment
 LANG = C
 # environment
-VSCODE_PID = 27955
+VSCODE_PID = 8955
 # environment
 _CE_CONDA = 
 # variable set hash-table stats:
-# Load=75/1024=7%, Rehash=0, Collisions=3/102=3%
+# Load=79/1024=8%, Rehash=0, Collisions=8/119=7%
 
 # Pattern-specific Variable Values
 
@@ -175,15 +182,21 @@ _CE_CONDA =
 
 # Directories
 
-# . (device 16777233, inode 18999979): 12 files, no impossibilities.
+# . (device 16777229, inode 18999979): 16 files, no impossibilities.
 
-# 12 files, no impossibilities in 1 directories.
+# 16 files, no impossibilities in 1 directories.
 
 # Implicit Rules
 
 # No implicit rules.
 
 # Files
+
+# Not a target:
+src/timer/Timer.cpp:
+#  Implicit rule search has not been done.
+#  Modification time never checked.
+#  File has not been updated.
 
 # Not a target:
 all:
@@ -195,6 +208,12 @@ all:
 # Load=0/32=0%, Rehash=0, Collisions=0/0=0%
 
 # Not a target:
+src/cpu/InterruptManager.cpp:
+#  Implicit rule search has not been done.
+#  Modification time never checked.
+#  File has not been updated.
+
+# Not a target:
 .SUFFIXES:
 #  Implicit rule search has not been done.
 #  Modification time never checked.
@@ -203,7 +222,7 @@ all:
 # Not a target:
 Makefile:
 #  Implicit rule search has been done.
-#  Last modified 2022-05-09 15:17:41
+#  Last modified 2022-05-30 12:22:41
 #  File has been updated.
 #  Successfully updated.
 # variable set hash-table stats:
@@ -216,10 +235,38 @@ include:
 #  File has not been updated.
 
 # Not a target:
+src/ppu/PPU.cpp:
+#  Implicit rule search has not been done.
+#  Modification time never checked.
+#  File has not been updated.
+
+debug: build lib include src CPU.o InstructionHandler.o InterruptManager.o MMU.o PPU.o Timer.o GameBoy.o Main.o
+#  Implicit rule search has not been done.
+#  Modification time never checked.
+#  File has not been updated.
+#  commands to execute (from `Makefile', line 14):
+	g++ $(VERSION) -g -o ManuGB $(BUILD_DIR)/*.o -I $(INCLUDE) -L $(LIB) -l SDL2-2.0.0
+	
+
+# Not a target:
+src/GameBoy.cpp:
+#  Implicit rule search has not been done.
+#  Modification time never checked.
+#  File has not been updated.
+
+# Not a target:
 build:
 #  Implicit rule search has not been done.
 #  Modification time never checked.
 #  File has not been updated.
+
+InstructionHandler.o: src/cpu/InstructionHandler.cpp
+#  Implicit rule search has not been done.
+#  Modification time never checked.
+#  File has not been updated.
+#  commands to execute (from `Makefile', line 20):
+	g++ $(VERSION) -Wall -c -g $(SRC)/cpu/InstructionHandler.cpp -o $(BUILD_DIR)/InstructionHandler.o
+	
 
 # Not a target:
 src:
@@ -233,22 +280,103 @@ lib:
 #  Modification time never checked.
 #  File has not been updated.
 
+MMU.o: src/mmu/MMU.cpp
+#  Implicit rule search has not been done.
+#  Modification time never checked.
+#  File has not been updated.
+#  commands to execute (from `Makefile', line 26):
+	g++ $(VERSION) -Wall -c -g $(SRC)/mmu/MMU.cpp -o $(BUILD_DIR)/MMU.o
+	
+
+GameBoy.o: src/GameBoy.cpp
+#  Implicit rule search has not been done.
+#  Modification time never checked.
+#  File has not been updated.
+#  commands to execute (from `Makefile', line 35):
+	g++ $(VERSION) -Wall -c -g $(SRC)/GameBoy.cpp -I $(INCLUDE) -o $(BUILD_DIR)/GameBoy.o
+	
+
 # Not a target:
 .DEFAULT:
 #  Implicit rule search has not been done.
 #  Modification time never checked.
 #  File has not been updated.
 
+# Not a target:
+src/Main.cpp:
+#  Implicit rule search has not been done.
+#  Modification time never checked.
+#  File has not been updated.
+
+CPU.o: src/cpu/CPU.cpp
+#  Implicit rule search has not been done.
+#  Modification time never checked.
+#  File has not been updated.
+#  commands to execute (from `Makefile', line 17):
+	g++ $(VERSION) -Wall -c -g $(SRC)/cpu/CPU.cpp -o $(BUILD_DIR)/CPU.o
+	
+
+PPU.o: src/ppu/PPU.cpp
+#  Implicit rule search has not been done.
+#  Modification time never checked.
+#  File has not been updated.
+#  commands to execute (from `Makefile', line 29):
+	g++ $(VERSION) -Wall -c -g $(SRC)/ppu/PPU.cpp -o $(BUILD_DIR)/PPU.o
+	
+
 game: build lib include src
 #  Implicit rule search has not been done.
 #  Modification time never checked.
 #  File has not been updated.
-#  commands to execute (from `Makefile', line 7):
+#  commands to execute (from `Makefile', line 11):
 	g++ $(SRC)/tmp.cpp -o game -I $(INCLUDE) -L $(LIB) -l SDL2-2.0.0
 	
 
+# Not a target:
+src/cpu/InstructionHandler.cpp:
+#  Implicit rule search has not been done.
+#  Modification time never checked.
+#  File has not been updated.
+
+Main.o: src/Main.cpp
+#  Implicit rule search has not been done.
+ 
+#  Modification time never checked.
+#  File has not been updated.
+#  commands to execute (from `Makefile', line 38):
+	g++ $(VERSION) -Wall -c -g $(SRC)/Main.cpp -I $(INCLUDE) -o $(BUILD_DIR)/Main.o
+	
+
+InterruptManager.o: src/cpu/InterruptManager.cpp
+#  Implicit rule search has not been done.
+#  Modification time never checked.
+#  File has not been updated.
+#  commands to execute (from `Makefile', line 23):
+	g++ $(VERSION) -Wall -c -g $(SRC)/cpu/InterruptManager.cpp -o $(BUILD_DIR)/InterruptManager.o
+	
+
+# Not a target:
+src/mmu/MMU.cpp:
+#  Implicit rule search has not been done.
+#  Modification time never checked.
+#  File has not been updated.
+
+Timer.o: src/timer/Timer.cpp
+#  Implicit rule search has not been done.
+#  Modification time never checked.
+#  File has not been updated.
+#  commands to execute (from `Makefile', line 32):
+	g++ $(VERSION) -Wall -c -g $(SRC)/timer/Timer.cpp -o $(BUILD_DIR)/Timer.o
+	
+
+# Not a target:
+src/cpu/CPU.cpp:
+#  Implicit rule search has not been done.
+#  Modification time never checked.
+#  File has not been updated.
+
 # files hash-table stats:
-# Load=9/1024=1%, Rehash=0, Collisions=0/25=0%
+# Load=26/1024=3%, Rehash=0, Collisions=0/62=0%
 # VPATH Search Paths
 
 # No `vpath' search paths.
@@ -260,6 +388,6 @@ game: build lib include src
 # strcache size: total = 4096 / max = 4096 / min = 4096 / avg = 4096
 # strcache free: total = 4087 / max = 4087 / min = 4087 / avg = 4087
 
-# Finished Make data base on Tue May 10 20:04:14 2022
+# Finished Make data base on Sun Jul 17 09:39:13 2022
 
  

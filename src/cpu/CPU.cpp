@@ -1,9 +1,9 @@
-#include "CPU.h"
+#include <cpu/CPU.h>
 #include <cstdio>
 
 CPU::CPU(MMU &mmu, PPU &ppu, Timer &timer, InterruptManager &int_manager) :
-mmu_(mmu), ppu_(ppu), timer_(timer),
-state_(CPUState::FETCH), int_manager_(int_manager) {
+state_(CPUState::FETCH), mmu_(mmu), ppu_(ppu),
+timer_(timer), int_manager_(int_manager) {
     //initialize registers to start values
     init_registers();
 }

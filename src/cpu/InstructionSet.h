@@ -1,29 +1,32 @@
 #pragma once
 
-#include "../Logging.h"
+#include <Logging.h>
 #include <unordered_map>
 #include <memory>
 #include <functional>
 #include <vector>
 #include <iterator>
-#include "../Constants.h"
+#include <Constants.h>
 class Instruction;
-#include "CPU.h"
+#include <cpu/CPU.h>
 
 class Instruction {
 public:
     Instruction(uint8_t t_cycles, std::vector<std::function<void(CPU&)> > ops);
     Instruction(const Instruction &inst);
-    //virtual ~Instruction();
-    //static Instruction get_instruction(bool cb_prefixed, uint8_t opcode);
     static std::unique_ptr<Instruction> get_instruction(bool cb_prefixed, uint8_t opcode);
-    //bool finished();
     uint8_t num_t_cycles();
     void execute(CPU &cpu);
+
+    //Instruction Set Bitmasks
+    static constexpr uint8_t ZERO{1 << 7};
+    static constexpr uint8_t SUB{1 << 6};
+    static constexpr uint8_t HALF_CARRY{1 << 5};
+    static constexpr uint8_t CARRY{1 << 4};
+
 private:
     uint8_t t_cycles_;
     //Used for conditional operations that have variable cycle durations
-    //bool conditional_stop_{false};
 
     std::vector<std::function<void(CPU&)> >ops_;
     std::vector<std::function<void(CPU&)> >::iterator it_;
@@ -831,12 +834,3 @@ private:
     static void set_7_HL_2(CPU &cpu);
     static void set_7_a(CPU &cpu);
 };
-/*
-class InstructionHandler {
-public:
-    static Instruction get_instruction(bool cb_prefixed, uint8_t opcode);
-private:
-    static const std::unordered_map<uint8_t, Instruction> non_prefixed_ops_;
-    static const std::unordered_map<uint8_t, Instruction> cb_prefixed_ops_;
-};
-*/

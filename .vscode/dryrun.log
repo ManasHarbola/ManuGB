@@ -1,5 +1,13 @@
-make --dry-run --keep-going --print-directory
+make --dry-run --always-make --keep-going --print-directory
+objc[9149]: Class AppleTypeCRetimerRestoreInfoHelper is implemented in both /usr/lib/libauthinstall.dylib (0x1f5baf458) and /Library/Apple/System/Library/PrivateFrameworks/MobileDevice.framework/Versions/A/MobileDevice (0x108a8c4f8). One of the two will be used. Which one is undefined.
+
+objc[9149]: Class AppleTypeCRetimerFirmwareAggregateRequestCreator is implemented in both /usr/lib/libauthinstall.dylib (0x1f5baf4a8) and /Library/Apple/System/Library/PrivateFrameworks/MobileDevice.framework/Versions/A/MobileDevice (0x108a8c548). One of the two will be used. Which one is undefined.
+objc[9149]: Class AppleTypeCRetimerFirmwareRequestCreator is implemented in both /usr/lib/libauthinstall.dylib (0x1f5baf4f8) and /Library/Apple/System/Library/PrivateFrameworks/MobileDevice.framework/Versions/A/MobileDevice (0x108a8c598). One of the two will be used. Which one is undefined.
+objc[9149]: Class ATCRTRestoreInfoFTABFile is implemented in both /usr/lib/libauthinstall.dylib (0x1f5baf548) and /Library/Apple/System/Library/PrivateFrameworks/MobileDevice.framework/Versions/A/MobileDevice (0x108a8c5e8). One of the two will be used. Which one is undefined.
+objc[9149]: Class AppleTypeCRetimerFirmwareCopier is implemented in both /usr/lib/libauthinstall.dylib (0x1f5baf598) and /Library/Apple/System/Library/PrivateFrameworks/MobileDevice.framework/Versions/A/MobileDevice (0x108a8c638). One of the two will be used. Which one is undefined.
+objc[9149]: Class ATCRTRestoreInfoFTABSubfile is implemented in both /usr/lib/libauthinstall.dylib (0x1f5baf5e8) and /Library/Apple/System/Library/PrivateFrameworks/MobileDevice.framework/Versions/A/MobileDevice (0x108a8c688). One of the two will be used. Which one is undefined.
+
 make: Entering directory `/Users/manas/Documents/Projects/ManuGB'
-make: `game' is up to date.
+g++ src/tmp.cpp -o game -I include -L lib -l SDL2-2.0.0
 make: Leaving directory `/Users/manas/Documents/Projects/ManuGB'
  
