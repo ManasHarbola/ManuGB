@@ -4,6 +4,7 @@
 #include <cpu/InterruptManager.h>
 #include <Constants.h>
 #include <Color.h>
+#include <bitset>
 
 enum class PPUState : uint8_t
 {
@@ -25,6 +26,14 @@ public:
     static constexpr uint16_t TRANSFER_PERIOD{172};
     static constexpr uint16_t HBLANK_PERIOD{204};
     static constexpr uint16_t VBLANK_LINE_PERIOD{456};
+
+    //OAM constants
+    static constexpr uint8_t BG_WIN_OVER_OBJ{1 << 7};
+    static constexpr uint8_t FLIP_SPRITE_Y{1 << 6};
+    static constexpr uint8_t FLIP_SPRITE_X{1 << 5};
+    static constexpr uint8_t SPRITE_PALETTE{1 << 4};
+    static constexpr uint8_t OAM_ENTRIES{40};
+    static constexpr uint8_t MAX_SPRITES_LINE{10};
 
     //LCDC Bitmasks
     static constexpr uint8_t LCD_ENABLE{1 << 7};
@@ -110,8 +119,17 @@ private:
     //for interfacing with SDL2
     char frame_buffer_[DISPLAY_WIDTH * DISPLAY_HEIGHT * 4];
 
+    //for tracking overlapping sprites and sprite/bg/win priorities
+    //pixel of color 1-3 from background/win has been drawn on current scanline
+    std::bitset<DISPLAY_WIDTH> bg_win_1_3_visited_;
+    //sprite pixel has been drawn on current scanline
+    std::bitset<DISPLAY_WIDTH> obj_visited_;
+
     uint8_t vram_[VRAM_SPACE];
     uint8_t oam_[OAM_SPACE];
+    //stores which oam sprites to draw on scanline
+    uint16_t oam_objects[10];
+
     uint8_t LCDC_{0x91};
     uint8_t STAT_{0x85};
     uint8_t SCY_{0x00};

@@ -29,6 +29,7 @@ class GameBoy {
     private:
         InterruptManager int_manager_;
         Timer timer_;
+        Serial port_;
         PPU ppu_;
         MMU mmu_;
         CPU cpu_;

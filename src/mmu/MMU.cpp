@@ -1,9 +1,8 @@
 #include "MMU.h"
 #include <algorithm>
 
-MMU::MMU(InterruptManager& int_manager, Timer& timer, PPU& ppu) :
-int_manager_(int_manager), timer_(timer), ppu_(ppu) {
-}
+MMU::MMU(InterruptManager& int_manager, Timer& timer, Serial& port, PPU& ppu) :
+int_manager_(int_manager), timer_(timer), port_(port), ppu_(ppu) {}
 
 bool MMU::load_rom(const std::string& rom_path) {
     //TODO: Update this to accomdate loading of ALL roms,
@@ -88,6 +87,7 @@ bool MMU::load_rom(const std::string& rom_path) {
 }
 
 void MMU::tick() {
+    reset_joypad();
     if (dma_transfer_lock_ > 0) {
         dma_transfer_lock_--;
         if (dma_transfer_lock_ == 0) {
@@ -137,12 +137,18 @@ uint8_t MMU::read(uint16_t addr) {
     //Additionally IE register at 0xFFFF
     switch(addr) {
         case 0xFF00:
-            //return P1_;
-            return 0xFF;
+            return P1_;
+            //return 0xFF;
+        
+        /*
         case 0xFF01:
             return SB_;
         case 0xFF02:
             return SC_;
+        */
+        case 0xFF01:
+        case 0xFF02:
+            return port_.read(addr);
 
         //Timer Registers
         case 0xFF04:
@@ -230,8 +236,9 @@ void MMU::write(uint16_t addr, uint8_t val) {
     //Additionally IE register at 0xFFFF
     switch(addr) {
         case 0xFF00:
-            P1_ = val;
+            P1_ = (val & 0xF0);
             break;
+        /*
         case 0xFF01:
             SB_ = val;
             //for debugging/testing - print serial
@@ -240,6 +247,12 @@ void MMU::write(uint16_t addr, uint8_t val) {
         case 0xFF02:
             SC_ = val;
             break;
+        */
+        case 0xFF01:
+        case 0xFF02:
+            port_.write(addr, val);
+            break;
+            
         //Timer Registers
         case 0xFF04:
         case 0xFF05:

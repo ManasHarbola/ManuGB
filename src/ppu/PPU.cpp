@@ -1,4 +1,5 @@
 #include <ppu/PPU.h>
+#include <algorithm>
 
 PPU::PPU(InterruptManager& int_manager):
 int_manager_(int_manager) {
@@ -173,6 +174,11 @@ void PPU::write(uint16_t addr, uint8_t val) {
 void PPU::draw_scanline() {
     //TODO: May need to clear out screen to white
     //when LCDC & BG_WIN_ENABLE == 0
+
+    //clear scanline bitsets
+    bg_win_1_3_visited_.reset();
+    obj_visited_.reset();
+
     draw_bg_scanline();
     draw_win_scanline();
     draw_obj_scanline();
@@ -218,12 +224,15 @@ void PPU::draw_bg_scanline() {
             uint8_t hi_byte = read(tile_addr + 1);
             uint8_t color_idx = (((hi_byte >> shift) & 1) << 1) | ((lo_byte >> shift) & 1);
 
+            if (color_idx != 0)
+                bg_win_1_3_visited_[px_cnt] = true;
+
             RGBA32 pix_color = COLOR_MAP[(BGP_ >> (color_idx << 1)) & 3];
             size_t idx = ((LY_ * DISPLAY_WIDTH) + px_cnt) * 4;
-            frame_buffer_[idx] = pix_color.r;
-            frame_buffer_[idx + 1] = pix_color.g;
-            frame_buffer_[idx + 2] = pix_color.b;
-            frame_buffer_[idx + 3] = pix_color.a;
+            frame_buffer_[idx]   = pix_color.r;
+            frame_buffer_[idx+1] = pix_color.g;
+            frame_buffer_[idx+2] = pix_color.b;
+            frame_buffer_[idx+3] = pix_color.a;
 
             //move to next tile if we've finished drawing row from current tile
             if (tile_col == 7)
@@ -274,6 +283,9 @@ void PPU::draw_win_scanline() {
             uint8_t hi_byte = read(tile_addr + 1);
             uint8_t color_idx = (((hi_byte >> shift) & 1) << 1) | ((lo_byte >> shift) & 1);
 
+            if (color_idx != 0)
+                bg_win_1_3_visited_[frame_x] = true;
+
             RGBA32 pix_color = COLOR_MAP[(BGP_ >> (color_idx << 1)) & 3];
             size_t idx = ((LY_ * DISPLAY_WIDTH) + frame_x) * 4;
             frame_buffer_[idx] = pix_color.r;
@@ -289,6 +301,101 @@ void PPU::draw_win_scanline() {
 
 void PPU::draw_obj_scanline() {
     if (LCDC_ & OBJ_ENABLE) {
+        uint8_t num_sprites = 0;
+        /*
+        Check each oam entry and decide which need to be drawn
+        onto scanline
+        */
+        for (uint16_t addr = 0xFE00; addr < 0xFEA0 && num_sprites < MAX_SPRITES_LINE; addr += 4) {
+            int y_pos = read(addr);
+            
+            if (((int) LY_) >= y_pos - 16) {
+                if (LCDC_ & OBJ_SIZE_FLAG && ((int) LY_) < y_pos) {
+                    oam_objects[num_sprites++] = addr;
+                } else if (((int) LY_) < y_pos - 8) {
+                    oam_objects[num_sprites++] = addr;
+                }
+            }
 
+        }
+        if (num_sprites > 0) {
+            /*
+            order sprites by increasing priority
+            so subsequent sprites that overlap will overrite lower sprites that
+            have already been written
+            */
+            std::sort(oam_objects, oam_objects + num_sprites - 1,
+                      [this](uint16_t a1, uint16_t a2){
+                                return read(a1 + 1) < read(a2 + 1) ||
+                                       (read(a1 + 1) == read(a2 + 1) && a1 < a2);
+                            }
+            );
+            
+            for (int i = 0; i < num_sprites; i++) {
+                int y_pos = read(oam_objects[i]);
+                y_pos -= 16;
+                int x_pos = read(oam_objects[i] + 1);
+                x_pos -= 8;
+                uint16_t tile_i = read(oam_objects[i] + 2);
+                uint8_t attr_flags = read(oam_objects[i] + 3);
+
+                uint8_t line_num = static_cast<uint8_t>(((int) LY_) - y_pos);
+                if (attr_flags & FLIP_SPRITE_Y)
+                    line_num = (LCDC_ & OBJ_SIZE_FLAG) ? 15 - line_num : 7 - line_num;
+                
+                uint16_t tile_addr = 0x8000;
+                if (LCDC_ & OBJ_SIZE_FLAG) {
+                    tile_addr += 32 * tile_i + 2 * line_num;
+                } else {
+                    tile_addr += 16 * tile_i + 2 * line_num;
+                }
+
+                uint8_t lo_byte = read(tile_addr);
+                uint8_t hi_byte = read(tile_addr + 1);
+                uint8_t palette = (attr_flags & SPRITE_PALETTE) ? OBP1_ : OBP0_;
+
+                if (attr_flags & FLIP_SPRITE_X) {
+                    for (uint8_t shift = 1; shift <= 0x80 && x_pos < DISPLAY_WIDTH; shift <<= 1, x_pos++) {
+                        if (x_pos >= 0) {
+                            uint8_t color_idx = (((hi_byte >> shift) << 1) | (lo_byte >> shift)) & 3;
+                            if (!obj_visited_[x_pos]) {
+                                //draw sprite on line only if neither condition is satisfied
+                                if (!((color_idx == 0 ||
+                                     ((attr_flags & BG_WIN_OVER_OBJ) && bg_win_1_3_visited_[x_pos])))) {
+                                    RGBA32 pix_color = COLOR_MAP[(palette >> (color_idx << 1)) & 3];
+                                    size_t idx = ((LY_ * DISPLAY_WIDTH) + x_pos) * 4;
+                                    frame_buffer_[idx]   = pix_color.r;
+                                    frame_buffer_[idx+1] = pix_color.g;
+                                    frame_buffer_[idx+2] = pix_color.b;
+                                    frame_buffer_[idx+3] = pix_color.a;
+                                }
+                                //mark pixel as visited
+                                obj_visited_[x_pos] = true;
+                            }
+                        }
+                    }
+                } else {
+                    for (uint8_t shift = 0x80; shift >= 1 && x_pos < DISPLAY_WIDTH; shift >>= 1, x_pos++) {
+                        if (x_pos >= 0) {
+                            uint8_t color_idx = (((hi_byte >> shift) << 1) | (lo_byte >> shift)) & 3;
+                            if (!obj_visited_[x_pos]) {
+                                //draw sprite on line only if neither condition is satisfied
+                                if (!((color_idx == 0 ||
+                                     ((attr_flags & BG_WIN_OVER_OBJ) && bg_win_1_3_visited_[x_pos])))) {
+                                    RGBA32 pix_color = COLOR_MAP[(palette >> (color_idx << 1)) & 3];
+                                    size_t idx = ((LY_ * DISPLAY_WIDTH) + x_pos) * 4;
+                                    frame_buffer_[idx]   = pix_color.r;
+                                    frame_buffer_[idx+1] = pix_color.g;
+                                    frame_buffer_[idx+2] = pix_color.b;
+                                    frame_buffer_[idx+3] = pix_color.a;
+                                }
+                                //mark pixel as visited
+                                obj_visited_[x_pos] = true;
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 }
