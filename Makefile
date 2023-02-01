@@ -1,11 +1,12 @@
 CXX=g++
 VERSION=-std=c++17
 CXXFLAGS= $(VERSION) -Wall -O3
-LDFLAGS=SDL2-2.0.0 
-BUILD_DIR=build
-SDL_INCLUDE=include
+LDFLAGS=-lSDL2
+SDL_INCLUDE=/opt/homebrew/include
+LIB=/opt/homebrew/lib
 SRC_INCLUDE=src
-LIB=lib
+BUILD_DIR=build
+
 INCLUDE=$(SDL_INCLUDE_DIR) $(MANUGB_INCLUDE_DIR)
 SRC=src
 
@@ -16,7 +17,7 @@ debug: CXXFLAGS+=-g
 debug: emulator
 
 emulator: $(BUILD_DIR) $(LIB) $(SDL_INCLUDE) $(SRC_INCLUDE) $(SRC) $(OBJS)
-	$(CXX) $(CXXFLAGS) -o ManuGB $(BUILD_DIR)/*.o -I $(SDL_INCLUDE) -I $(SRC_INCLUDE) -L $(LIB) -l $(LDFLAGS)
+	$(CXX) $(CXXFLAGS) -o ManuGB $(BUILD_DIR)/*.o -I$(SDL_INCLUDE) -I$(SRC_INCLUDE) -L$(LIB) $(LDFLAGS)
 
 CPU.o : $(SRC)/cpu/CPU.cpp
 	$(CXX) $(CXXFLAGS) -c $(SRC)/cpu/CPU.cpp -I $(SRC_INCLUDE) -o $(BUILD_DIR)/CPU.o
