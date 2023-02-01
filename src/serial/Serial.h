@@ -19,7 +19,7 @@ public:
                 ongoing_transfer_ = false;
                 t_cycle_count_ = 0;
                 SB_ = 0xFF;
-                std::cout << "\nRequesting Serial Interrupt" << std::endl;
+                //std::cout << "\nRequesting Serial Interrupt" << std::endl;
                 int_manager_.request_interrupt(InterruptType::SERIAL);
             }
         }

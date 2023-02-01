@@ -1,8 +1,10 @@
 #include "MMU.h"
 #include <algorithm>
 
-MMU::MMU(InterruptManager& int_manager, Timer& timer, Serial& port, PPU& ppu) :
-int_manager_(int_manager), timer_(timer), port_(port), ppu_(ppu) {}
+MMU::MMU(InterruptManager& int_manager, Timer& timer, Serial& port,
+         PPU& ppu, Joypad& buttons) :
+int_manager_(int_manager), timer_(timer), port_(port),
+ppu_(ppu), buttons_(buttons) {}
 
 bool MMU::load_rom(const std::string& rom_path) {
     //TODO: Update this to accomdate loading of ALL roms,
@@ -65,7 +67,7 @@ bool MMU::load_rom(const std::string& rom_path) {
     write(0xFF43, 0x00);	
     write(0xFF44, 0x00);	
     write(0xFF45, 0x00);	
-    write(0xFF46, 0xFF);	
+    //write(0xFF46, 0xFF);	
     write(0xFF47, 0xFC);	
     write(0xFF4A, 0x00);	
     write(0xFF4B, 0x00);	
@@ -87,7 +89,7 @@ bool MMU::load_rom(const std::string& rom_path) {
 }
 
 void MMU::tick() {
-    reset_joypad();
+    //reset_joypad();
     if (dma_transfer_lock_ > 0) {
         dma_transfer_lock_--;
         if (dma_transfer_lock_ == 0) {
@@ -95,8 +97,11 @@ void MMU::tick() {
             if (DMA_ > 0xDF)
                 DMA_ -= 0x20;
             uint16_t start = ((uint16_t) DMA_) << 8;
-            for (uint16_t offset = 0; offset < 0xA0; offset++)
-                write(0xFE00 | offset, read(start | offset));
+            for (uint16_t offset = 0; offset < 0xA0; offset++) {
+                //write(0xFE00 | offset, read(start | offset));
+                uint8_t v = read(start | offset);
+                write(0xFE00 | offset, v);
+            }
         }
     }
 }
@@ -137,8 +142,7 @@ uint8_t MMU::read(uint16_t addr) {
     //Additionally IE register at 0xFFFF
     switch(addr) {
         case 0xFF00:
-            return P1_;
-            //return 0xFF;
+            return buttons_.read(addr);
         
         /*
         case 0xFF01:
@@ -215,7 +219,7 @@ void MMU::write(uint16_t addr, uint8_t val) {
         return;
     }
     //ECHO RAM write
-    if (addr < 0xFEA0) {
+    if (addr < 0xFE00) {
         wram_[addr - 0xE000] = val;
         return;
     }
@@ -236,7 +240,7 @@ void MMU::write(uint16_t addr, uint8_t val) {
     //Additionally IE register at 0xFFFF
     switch(addr) {
         case 0xFF00:
-            P1_ = (val & 0xF0);
+            buttons_.write(addr, val);
             break;
         /*
         case 0xFF01:
@@ -262,7 +266,7 @@ void MMU::write(uint16_t addr, uint8_t val) {
         //Interrupt Flag
         case 0xFF0F:
             //log for debugging
-            LOG("IF set to: " << (unsigned int) val);
+            //LOG("IF set to: " << (unsigned int) val);
             int_manager_.set_IF(val);
             break;
         //All Sound (NRXX) registers omitted
@@ -298,7 +302,7 @@ void MMU::write(uint16_t addr, uint8_t val) {
         // Interrupt Enable
         case 0xFFFF:
             //log for debugging
-            LOG("IE set to: " << (unsigned int) val);
+            //LOG("IE set to: " << (unsigned int) val);
             int_manager_.set_IE(val);
             break;
     }

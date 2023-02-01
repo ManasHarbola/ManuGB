@@ -6,10 +6,10 @@
 #include "cpu/CPU.h"
 #include "ppu/PPU.h"
 #include "timer/Timer.h"
-#include "UI/ControlManager.h"
 #include "mmu/MMU.h"
 #include "serial/Serial.h"
 #include "cpu/InterruptManager.h"
+#include <joypad/Joypad.h>
 #include <graphics/Display.h>
 #include "Constants.h"
 #include <string>
@@ -19,7 +19,7 @@
 //entry point into beginning emulation of rom
 class GameBoy {
     public:
-        GameBoy(std::string &rom_path, Display& display);
+        GameBoy(std::string &rom_path, Display& display, Joypad& buttons);
         bool load_rom(std::string &rom_path);
         int run();
         //steps all our hardware by specified number of t-cycles
@@ -35,6 +35,7 @@ class GameBoy {
         CPU cpu_;
 
         Display& display_;
+        Joypad& buttons_;
         //ControlManager joypad_;
         /*
         DMA dma_;
@@ -43,5 +44,5 @@ class GameBoy {
 
         bool rom_loaded_{false};
         bool paused_{false};
-        bool exit_requested_{false};
+        //bool exit_requested_{false};
 };

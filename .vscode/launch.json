@@ -4,12 +4,24 @@
     // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [
+
+
+    
         {
             "type": "lldb",
             "request": "launch",
             "name": "02-interrupts Test",
             "program": "${workspaceFolder}/ManuGB",
-            "args": ["gb-test-roms/individual_pool/02-interrupts.gb"],
+            "args": ["tests/gb-test-roms/individual_pool/02-interrupts.gb"],
+            "cwd": "${workspaceFolder}",
+            "MIMode": "lldb"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Tetris",
+            "program": "${workspaceFolder}/ManuGB",
+            "args": ["tests/gb-test-roms/individual_pool/Tetris.gb"],
             "cwd": "${workspaceFolder}",
             "MIMode": "lldb"
         },
@@ -18,7 +30,25 @@
             "request": "launch",
             "name": "instr_timing Test",
             "program": "${workspaceFolder}/ManuGB",
-            "args": ["gb-test-roms/individual_pool/instr_timing.gb"],
+            "args": ["tests/gb-test-roms/individual_pool/instr_timing.gb"],
+            "cwd": "${workspaceFolder}",
+            "MIMode": "lldb"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "mooneye-gb add_sp_e_timing",
+            "program": "${workspaceFolder}/ManuGB",
+            "args": ["tests/mooneye-tests/acceptance/add_sp_e_timing.gb"],
+            "cwd": "${workspaceFolder}",
+            "MIMode": "lldb"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "dmg-acid2",
+            "program": "${workspaceFolder}/ManuGB",
+            "args": ["tests/gb-test-roms/individual_pool/dmg-acid2.gb"],
             "cwd": "${workspaceFolder}",
             "MIMode": "lldb"
         }

@@ -36,6 +36,7 @@ void PPU::tick() {
                 //increment LY register
                 t_cycle_lock_ = 0;
                 inc_ly();
+                update_coincidence_flag();
 
                 if (LY_ == 144) {
                     set_ppu_state(PPUState::VBLANK);
@@ -52,7 +53,6 @@ void PPU::tick() {
             if (t_cycle_lock_ == VBLANK_LINE_PERIOD) {
                 t_cycle_lock_ = 0;
                 inc_ly();
-
                 update_coincidence_flag();
                 check_for_irq();
 
@@ -60,7 +60,7 @@ void PPU::tick() {
                     win_ly_internal = 0;
                     set_ppu_state(PPUState::OAM_FETCH);
                     skip_frame_ = false;
-                    update_coincidence_flag();
+                    //update_coincidence_flag();
                     check_for_irq();
                 }
             }
@@ -108,13 +108,15 @@ uint8_t PPU::read(uint16_t addr) {
 
 void PPU::write(uint16_t addr, uint8_t val) {
     //VRAM write
-    if (addr >= 0x8000 && addr < 0xA000 && vram_accessible())
+    if (addr >= 0x8000 && addr < 0xA000 && vram_accessible()) {
         vram_[addr - 0x8000] = val;
         return;
+    }
     //OAM write
-    if (addr >= 0xFE00 && addr < 0xFEA0 && oam_accessible())
+    if (addr >= 0xFE00 && addr < 0xFEA0 && oam_accessible()) {
         oam_[addr - 0xFE00] = val;
         return;
+    }
     //PPU Registers
     switch(addr) {
         case 0xFF40:
@@ -132,7 +134,8 @@ void PPU::write(uint16_t addr, uint8_t val) {
         case 0xFF41:
             //LYC_STAT (Coincidence bit) and LCD_MODE<1:0> are read only
             //AND bit 7 is always reads 1
-            STAT_ = ((val & 0xF8) | 0x80);
+            STAT_ = 0x80 | (val & 0xF8) | (STAT_ & 0x7);
+            check_for_irq();
             break;
         case 0xFF42:
             SCY_ = val;
@@ -213,7 +216,7 @@ void PPU::draw_bg_scanline() {
             uint16_t tile_addr;
             //find memory address of tile to draw
             if (tile_num > 127 && use_signed) {
-                tile_addr = data_addr - 0x800 + ((uint16_t(tile_num - 127)) << 4);
+                tile_addr = data_addr - 0x800 + ((uint16_t(tile_num - 128)) << 4);
             } else {
                 tile_addr = data_addr + ((uint16_t(tile_num)) << 4);
             }
@@ -237,6 +240,16 @@ void PPU::draw_bg_scanline() {
             //move to next tile if we've finished drawing row from current tile
             if (tile_col == 7)
                 tile_i++;
+        }
+    } else {
+        //draw white
+        for (uint8_t px_cnt = 0; px_cnt < DISPLAY_WIDTH; px_cnt++) {
+            RGBA32 pix_color = COLOR_MAP[BGP_ & 3];
+            size_t idx = ((LY_ * DISPLAY_WIDTH) + px_cnt) * 4;
+            frame_buffer_[idx]   = pix_color.r;
+            frame_buffer_[idx+1] = pix_color.g;
+            frame_buffer_[idx+2] = pix_color.b;
+            frame_buffer_[idx+3] = pix_color.a;
         }
     }
 }
@@ -267,7 +280,7 @@ void PPU::draw_win_scanline() {
             uint16_t tile_addr;
             //find memory address of tile to draw
             if (tile_num > 127 && use_signed) {
-                tile_addr = data_addr - 0x800 + ((uint16_t(tile_num - 127)) << 4);
+                tile_addr = data_addr - 0x800 + ((uint16_t(tile_num - 128)) << 4);
             } else {
                 tile_addr = data_addr + ((uint16_t(tile_num)) << 4);
             }
@@ -309,91 +322,82 @@ void PPU::draw_obj_scanline() {
         for (uint16_t addr = 0xFE00; addr < 0xFEA0 && num_sprites < MAX_SPRITES_LINE; addr += 4) {
             int y_pos = read(addr);
             
-            if (((int) LY_) >= y_pos - 16) {
-                if (LCDC_ & OBJ_SIZE_FLAG && ((int) LY_) < y_pos) {
-                    oam_objects[num_sprites++] = addr;
-                } else if (((int) LY_) < y_pos - 8) {
+            if (((int) LY_) >= (y_pos - 16)) {
+                if (((LCDC_ & OBJ_SIZE_FLAG) && ((int) LY_) < y_pos) ||
+                    (((int) LY_) < y_pos - 8)) {
                     oam_objects[num_sprites++] = addr;
                 }
             }
 
         }
+        //for debugging, delete later
+        
+        //std::cout << "LY_ " << (int) LY_ << "has " << (int) num_sprites << " sprites" << std::endl;
+
         if (num_sprites > 0) {
             /*
             order sprites by increasing priority
             so subsequent sprites that overlap will overrite lower sprites that
             have already been written
             */
-            std::sort(oam_objects, oam_objects + num_sprites - 1,
+            std::sort(oam_objects, oam_objects + num_sprites,
                       [this](uint16_t a1, uint16_t a2){
-                                return read(a1 + 1) < read(a2 + 1) ||
+                                return (read(a1 + 1) < read(a2 + 1)) ||
                                        (read(a1 + 1) == read(a2 + 1) && a1 < a2);
                             }
             );
             
             for (int i = 0; i < num_sprites; i++) {
-                int y_pos = read(oam_objects[i]);
-                y_pos -= 16;
-                int x_pos = read(oam_objects[i] + 1);
-                x_pos -= 8;
+                int y_pos = static_cast<int>(read(oam_objects[i])) - 16;
+                int x_pos = static_cast<int>(read(oam_objects[i] + 1)) - 8;
                 uint16_t tile_i = read(oam_objects[i] + 2);
                 uint8_t attr_flags = read(oam_objects[i] + 3);
 
-                uint8_t line_num = static_cast<uint8_t>(((int) LY_) - y_pos);
-                if (attr_flags & FLIP_SPRITE_Y)
-                    line_num = (LCDC_ & OBJ_SIZE_FLAG) ? 15 - line_num : 7 - line_num;
-                
-                uint16_t tile_addr = 0x8000;
-                if (LCDC_ & OBJ_SIZE_FLAG) {
-                    tile_addr += 32 * tile_i + 2 * line_num;
-                } else {
-                    tile_addr += 16 * tile_i + 2 * line_num;
+                uint16_t line_num = static_cast<uint16_t>(((int) LY_) - y_pos);
+
+                if ((LCDC_ & OBJ_SIZE_FLAG)) {
+                    tile_i &= 0xFE;
+                    if (attr_flags & FLIP_SPRITE_Y) {
+                        line_num = 15 - line_num;
+                    }
+                    if (line_num > 7) {
+                        tile_i++;
+                        line_num -= 8;
+                    }
+                } else if (attr_flags & FLIP_SPRITE_Y) {
+                    line_num = 7 - line_num;
                 }
+                
+                uint16_t tile_addr = 0x8000 + (tile_i << 4) + (line_num << 1);
 
                 uint8_t lo_byte = read(tile_addr);
                 uint8_t hi_byte = read(tile_addr + 1);
                 uint8_t palette = (attr_flags & SPRITE_PALETTE) ? OBP1_ : OBP0_;
+                
+                int8_t cnt = (attr_flags & FLIP_SPRITE_X) ? 0 : 7;
 
-                if (attr_flags & FLIP_SPRITE_X) {
-                    for (uint8_t shift = 1; shift <= 0x80 && x_pos < DISPLAY_WIDTH; shift <<= 1, x_pos++) {
-                        if (x_pos >= 0) {
-                            uint8_t color_idx = (((hi_byte >> shift) << 1) | (lo_byte >> shift)) & 3;
-                            if (!obj_visited_[x_pos]) {
-                                //draw sprite on line only if neither condition is satisfied
-                                if (!((color_idx == 0 ||
-                                     ((attr_flags & BG_WIN_OVER_OBJ) && bg_win_1_3_visited_[x_pos])))) {
-                                    RGBA32 pix_color = COLOR_MAP[(palette >> (color_idx << 1)) & 3];
-                                    size_t idx = ((LY_ * DISPLAY_WIDTH) + x_pos) * 4;
-                                    frame_buffer_[idx]   = pix_color.r;
-                                    frame_buffer_[idx+1] = pix_color.g;
-                                    frame_buffer_[idx+2] = pix_color.b;
-                                    frame_buffer_[idx+3] = pix_color.a;
-                                }
-                                //mark pixel as visited
-                                obj_visited_[x_pos] = true;
+                while (cnt >= 0 && cnt < 8 && x_pos < DISPLAY_WIDTH) {
+                    if (x_pos >= 0) {
+                        uint8_t color_idx = ((((hi_byte & (1 << cnt)) >> cnt) << 1) | ((lo_byte & (1 << cnt)) >> cnt)) & 3;
+                        if (!obj_visited_[x_pos]) {
+                            //draw sprite on line only if neither condition is satisfied
+                            if (!(color_idx == 0 ||
+                                    ((attr_flags & BG_WIN_OVER_OBJ) && bg_win_1_3_visited_[x_pos]) ||
+                                 !(LCDC_ & BG_WIN_ENABLE))
+                                ) {
+                                RGBA32 pix_color = COLOR_MAP[(palette >> (color_idx << 1)) & 3];
+                                size_t idx = ((LY_ * DISPLAY_WIDTH) + x_pos) * 4;
+                                frame_buffer_[idx]   = pix_color.r;
+                                frame_buffer_[idx+1] = pix_color.g;
+                                frame_buffer_[idx+2] = pix_color.b;
+                                frame_buffer_[idx+3] = pix_color.a;
                             }
+                            //mark pixel as visited
+                            obj_visited_[x_pos] = true;
                         }
                     }
-                } else {
-                    for (uint8_t shift = 0x80; shift >= 1 && x_pos < DISPLAY_WIDTH; shift >>= 1, x_pos++) {
-                        if (x_pos >= 0) {
-                            uint8_t color_idx = (((hi_byte >> shift) << 1) | (lo_byte >> shift)) & 3;
-                            if (!obj_visited_[x_pos]) {
-                                //draw sprite on line only if neither condition is satisfied
-                                if (!((color_idx == 0 ||
-                                     ((attr_flags & BG_WIN_OVER_OBJ) && bg_win_1_3_visited_[x_pos])))) {
-                                    RGBA32 pix_color = COLOR_MAP[(palette >> (color_idx << 1)) & 3];
-                                    size_t idx = ((LY_ * DISPLAY_WIDTH) + x_pos) * 4;
-                                    frame_buffer_[idx]   = pix_color.r;
-                                    frame_buffer_[idx+1] = pix_color.g;
-                                    frame_buffer_[idx+2] = pix_color.b;
-                                    frame_buffer_[idx+3] = pix_color.a;
-                                }
-                                //mark pixel as visited
-                                obj_visited_[x_pos] = true;
-                            }
-                        }
-                    }
+                    x_pos++;
+                    cnt = (attr_flags & FLIP_SPRITE_X) ? (cnt + 1) : (cnt - 1);
                 }
             }
         }

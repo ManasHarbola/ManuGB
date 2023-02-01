@@ -59,8 +59,8 @@ private:
     inline bool ppu_enabled() {return LCDC_ & LCD_ENABLE;}
     inline PPUState get_ppu_state() {return (PPUState) (STAT_ & STATE_MASK);}
     inline bool vram_accessible() {
-        return true;
-        //return !ppu_enabled() || (get_ppu_state() != PPUState::PIXEL_TRANSFER);
+        //return true;
+        return !ppu_enabled() || (get_ppu_state() != PPUState::PIXEL_TRANSFER);
     }
     inline bool oam_accessible() {
         //return true;
@@ -76,8 +76,12 @@ private:
     }
     void enable_ppu() {
         //set state to OAM_FETCH
-        STAT_ |= (uint8_t) PPUState::OAM_FETCH;
+        set_ppu_state(PPUState::OAM_FETCH);
+        LY_ = 0;
+        win_ly_internal = 0;
+        t_cycle_lock_ = 0;
         skip_frame_ = true;
+        check_for_irq();
     }
     
     inline void set_ppu_state(PPUState state) {STAT_ = (STAT_ & 0xFC) | ((uint8_t) state);}
@@ -89,10 +93,11 @@ private:
         if ((state == PPUState::OAM_FETCH && (STAT_ & INTR_OAM)) ||
             (trigger && (STAT_ & INTR_OAM)) ||
             (state == PPUState::HBLANK && (STAT_ & INTR_HBLANK)) ||
-            (state == PPUState::VBLANK && (STAT_ & INTR_VBLANK)) ||
+            (state == PPUState::VBLANK && ((STAT_ & INTR_VBLANK) || (STAT_ & INTR_OAM))) ||
             ((STAT_ & INTR_LYC) && (STAT_ & COINCIDENCE)))
         {
             if (!stat_irq_) {
+                //std::cout << "Requesting LCD Interrupt" << std::endl;
                 int_manager_.request_interrupt(InterruptType::LCDSTAT);
                 stat_irq_ = true;
             }
