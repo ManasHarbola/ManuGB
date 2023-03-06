@@ -11,6 +11,13 @@ constexpr uint32_t DISPLAY_HEIGHT{144};
 constexpr size_t operator""_kb(unsigned long long num){return (1 << 10) * num;}
 constexpr size_t operator""_mb(unsigned long long num){return (1 << 20) * num;}
 
+//
+template<typename Tv, typename Tl, typename Tr>
+constexpr inline bool in_range_closed(const Tv val, const Tl left_bound, const Tr right_bound){
+    return (val >= left_bound) && (val <= right_bound);
+}
+
+
 constexpr size_t CART_SPACE{2_mb};
 constexpr size_t ROM_BANK_SPACE{32_kb};
 constexpr size_t WRAM_BANK_SPACE{8_kb};

@@ -1,5 +1,6 @@
 #include <cpu/CPU.h>
 #include <cstdio>
+#include <Logging.h>
 
 CPU::CPU(MMU &mmu, PPU &ppu, Timer &timer, InterruptManager &int_manager) :
 state_(CPUState::FETCH), mmu_(mmu), ppu_(ppu),
@@ -83,6 +84,8 @@ void CPU::tick() {
 
             //get instruction at pc and increment pc
             curr_inst_ = mmu_.read(registers_.pc++);
+            //std::cout << "Inst: " << print_num<int>(curr_inst_, std::hex) << std::endl;
+
             prev_pc = registers_.pc - 1;
 
             //check if this is 0xCB-prefixed instruction

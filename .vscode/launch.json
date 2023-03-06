@@ -6,6 +6,7 @@
     "configurations": [
 
 
+
     
         {
             "type": "lldb",
@@ -28,11 +29,21 @@
         {
             "type": "lldb",
             "request": "launch",
+            "name": "mooneye-test",
+            "program": "${workspaceFolder}/ManuGB",
+            "args": ["tests/mooneye-tests/emulator-only/mbc1/bits_bank2.gb"],
+            "cwd": "${workspaceFolder}",
+            "MIMode": "lldb"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
             "name": "instr_timing Test",
             "program": "${workspaceFolder}/ManuGB",
             "args": ["tests/gb-test-roms/individual_pool/instr_timing.gb"],
             "cwd": "${workspaceFolder}",
-            "MIMode": "lldb"
+            "MIMode": "lldb",
+            "stopOnEntry": true
         },
         {
             "type": "lldb",

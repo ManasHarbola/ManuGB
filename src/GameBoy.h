@@ -20,7 +20,7 @@
 class GameBoy {
     public:
         GameBoy(std::string &rom_path, Display& display, Joypad& buttons);
-        bool load_rom(std::string &rom_path);
+        //bool load_rom(std::string &rom_path);
         int run();
         //steps all our hardware by specified number of t-cycles
         int update(uint32_t num_cycles);
@@ -36,13 +36,6 @@ class GameBoy {
 
         Display& display_;
         Joypad& buttons_;
-        //ControlManager joypad_;
-        /*
-        DMA dma_;
-        Serial port_;
-        */
-
+        
         bool rom_loaded_{false};
-        bool paused_{false};
-        //bool exit_requested_{false};
 };

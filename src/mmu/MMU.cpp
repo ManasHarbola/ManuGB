@@ -1,5 +1,6 @@
 #include "MMU.h"
 #include <algorithm>
+#include <initializer_list>
 
 MMU::MMU(InterruptManager& int_manager, Timer& timer, Serial& port,
          PPU& ppu, Joypad& buttons) :
@@ -14,6 +15,7 @@ bool MMU::load_rom(const std::string& rom_path) {
         std::cout << "file not opened..." << std::endl;
         return false;
     }
+
     rom_file.seekg(0, std::ios::end);
     size_t sz = rom_file.tellg();
     std::cout << "Size was: " << sz << std::endl;
@@ -21,12 +23,33 @@ bool MMU::load_rom(const std::string& rom_path) {
         std::cout << "Something happened..." << std::endl;
         return false;
     }
+    
+    uint8_t cart_header[0x150];
     rom_file.seekg(0, std::ios::beg);
-    rom_file.read((char*) cart_, std::min(CART_SPACE, sz));
-    rom_file.close();
+    //rom_file.read((char*) cart_, std::min(CART_SPACE, sz));
+    
+    //read the cartridge header to create mbc instance
+    rom_file.read((char*) cart_header, 0x150);
 
+    rom_file.seekg(0, std::ios::beg);
+
+    //create mbc_ instance
+    mbc_ = MBCFactory::create_mbc(cart_header[0x147], rom_file);
+
+    if (!mbc_) {
+        std::cout << "unable to create memory bank controller..." << std::endl;
+        return false;
+    }
+
+    rom_file.close();
+    
+    /*
     //copy first 32k of rom onto mem_
-    std::copy(cart_, cart_ + 32_kb, rom_);
+    //std::copy(cart_, cart_ + 32_kb, rom_);
+    for (size_t i = 0; i < 32_kb; i++) {
+        rom_.write(i, cart_[i]);
+    }
+    */
 
     //set initial values of hardware registers
     //TODO: clean this up lol
@@ -90,6 +113,8 @@ bool MMU::load_rom(const std::string& rom_path) {
 
 void MMU::tick() {
     //reset_joypad();
+    if (mbc_)
+        mbc_->tick();
     if (dma_transfer_lock_ > 0) {
         dma_transfer_lock_--;
         if (dma_transfer_lock_ == 0) {
@@ -107,203 +132,60 @@ void MMU::tick() {
 }
 
 uint8_t MMU::read(uint16_t addr) {
-    //TODO: MUST ADAPT FOR memory bank switching the future to accomodate >32kb roms
-    //ROM BANKS 00, NN
-    if (addr < 0x8000)
-        return rom_[addr];
-    //VRAM access
-    if (addr < 0xA000)
-        return ppu_.read(addr);
-    //External RAM Access
-    if (addr < 0xC000)
-        return external_ram_[addr - 0xA000];
-    //Working RAM Access
-    if (addr < 0xE000)
-        return wram_[addr - 0xC000];
-    //ECHO RAM Access (echo of wram bank 0)
-    if (addr < 0xFE00)
-        return wram_[addr - 0xE000];
-    //OAM - only accessible by CPU/PPU when DMA is NOT happening
-    if (addr < 0xFEA0 && !dma_transfer())
-        return ppu_.read(addr);
-    //FEA0-FEFF range (return 0x00 for DMG)
-    if (addr < 0xFF00)
-        return 0x00;
-
-    //HRAM access
-    /*
-    TODO: This should be the only memory accessible by CPU
-          during DMA transfer
-    */
-    if (addr >= 0xFF80 && addr < 0xFFFF)
-        return hram_[addr - 0xFF80];
-
-    //I/O Register Access (0xFF00 - 0xFF7F range)
-    //Additionally IE register at 0xFFFF
     switch(addr) {
-        case 0xFF00:
-            return buttons_.read(addr);
-        
-        /*
-        case 0xFF01:
-            return SB_;
-        case 0xFF02:
-            return SC_;
-        */
-        case 0xFF01:
-        case 0xFF02:
-            return port_.read(addr);
-
-        //Timer Registers
-        case 0xFF04:
-        case 0xFF05:
-        case 0xFF06:
-        case 0xFF07:
-            return timer_.read(addr);
-
-        //Interrupt Flag
-        case 0xFF0F:
-            return int_manager_.get_IF();
-        
-        //All Sound (NRXX) registers omitted
-        //TODO: Maybe implement sound?
-        case 0xFF10 ... 0xFF26:
-            return nr_[addr - 0xFF10];
-        //DMA register
         case 0xFF46:
             return DMA_;
-
-        //PPU/Graphics Registers
-        // LCDC, STAT, SCY, SCX, LY, LYC
-        case 0xFF40:
-        case 0xFF41:
-        case 0xFF42:
-        case 0xFF43:
-        case 0xFF44:
-        case 0xFF45:
-        // BGP, OBP0, OBP1, WY, WX
-        case 0xFF47:
-        case 0xFF48:
-        case 0xFF49:
-        case 0xFF4A:
-        case 0xFF4B:
-            return ppu_.read(addr);
-        
-        // Interrupt Enable
+        case 0xFF0F:
+            return int_manager_.get_IF();
         case 0xFFFF:
             return int_manager_.get_IE();
-        
     }
+    if (mbc_->manages(addr))
+        return mbc_->read(addr);
+    for (AddressSpace* component : read_list_) {
+        if (component->manages(addr))
+            return component->read(addr);
+    }
+    if (ppu_.manages(addr) &&
+        !(addr >= 0xFE00 && addr < 0xFEA0 && dma_transfer())) {
+        return ppu_.read(addr);
+    }
+    if (wram_.manages(addr) || (addr >= 0xE000 && addr < 0xFE00))
+        return (addr >= 0xE000 && addr < 0xFE00) ? wram_.read(addr - 0xE000) : wram_.read(addr);
+    if (addr >= 0xFEA0 && addr < 0xFF00)
+        return 0x00;
     
-    //just return 0xFF
     return 0xFF;
 }
 
 void MMU::write(uint16_t addr, uint8_t val) {
-    //!!!!!!!! READ BELOW
-    //TODO: add bank switching in response to writes
-    if (addr < 0x8000)
-        return;
-    //VRAM write
-    //TODO: Block CPU access to VRAM when needed
-    if (addr < 0xA000)
-        return ppu_.write(addr, val);
-    //External RAM Write
-    if (addr < 0xC000) {
-        external_ram_[addr - 0xA000] = val;
-        return;
-    }
-    //Working RAM Write 
-    if (addr < 0xE000) {
-        wram_[addr - 0xC000] = val;
-        return;
-    }
-    //ECHO RAM write
-    if (addr < 0xFE00) {
-        wram_[addr - 0xE000] = val;
-        return;
-    }
-    //OAM - write access only allowed when dma_transfer is not happening
-    if (addr < 0xFEA0 && !dma_transfer())
-        return ppu_.write(addr, val);
-        
-    //HRAM write
-    /*
-    TODO: This should be the only memory accessible by CPU
-          during DMA transfer
-    */
-    if (addr >= 0xFF80 && addr < 0xFFFF) {
-        hram_[addr - 0xFF80] = val;
-    }
-    
-    //I/O Register Access (0xFF00 - 0xFF7F range)
-    //Additionally IE register at 0xFFFF
     switch(addr) {
-        case 0xFF00:
-            buttons_.write(addr, val);
-            break;
-        /*
-        case 0xFF01:
-            SB_ = val;
-            //for debugging/testing - print serial
-            std::cout << (char) val;
-            break;
-        case 0xFF02:
-            SC_ = val;
-            break;
-        */
-        case 0xFF01:
-        case 0xFF02:
-            port_.write(addr, val);
-            break;
-            
-        //Timer Registers
-        case 0xFF04:
-        case 0xFF05:
-        case 0xFF06:
-        case 0xFF07:
-            return timer_.write(addr, val);
-        //Interrupt Flag
         case 0xFF0F:
             //log for debugging
             //LOG("IF set to: " << (unsigned int) val);
             int_manager_.set_IF(val);
             break;
-        //All Sound (NRXX) registers omitted
-        //TODO: Maybe implement sound?
-        case 0xFF10 ... 0xFF26:
-            nr_[addr - 0xFF10] = val;
-            break;
-
-        //DMA register
-        //sets dma_transfer_lock_ to 644 t-cycles to block OAM r/w access
         case 0xFF46:
             DMA_ = val;
             dma_transfer_lock_ = DMA_TRANSFER_PERIOD;
             break;
-
-        //PPU/Graphics Registers
-        // LCDC, STAT, SCY, SCX, LY, LYC
-        case 0xFF40:
-        case 0xFF41:
-        case 0xFF42:
-        case 0xFF43:
-        case 0xFF44:
-        case 0xFF45:
-        // BGP, OBP0, OBP1, WY, WX
-        case 0xFF47:
-        case 0xFF48:
-        case 0xFF49:
-        case 0xFF4A:
-        case 0xFF4B:
-            //TODO: CONTROL CPU ACCESS TO PPU REGISTERS APPROPRIATELY
-            return ppu_.write(addr, val);
-        
         // Interrupt Enable
         case 0xFFFF:
             //log for debugging
             //LOG("IE set to: " << (unsigned int) val);
             int_manager_.set_IE(val);
             break;
+        }
+    if (mbc_->manages(addr))
+        return mbc_->write(addr, val);
+    for (AddressSpace* component : write_list_) {
+        if (component->manages(addr))
+            return component->write(addr, val);
     }
+    if (ppu_.manages(addr) &&
+        !(addr >= 0xFE00 && addr < 0xFEA0 && dma_transfer())) {
+        return ppu_.write(addr, val);
+    }
+    if (wram_.manages(addr) || (addr >= 0xE000 && addr < 0xFE00))
+        return (addr >= 0xE000 && addr < 0xFE00) ? wram_.write(addr - 0xE000, val) : wram_.write(addr, val);
 }

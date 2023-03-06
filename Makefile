@@ -7,14 +7,20 @@ LIB=/opt/homebrew/lib
 SRC_INCLUDE=src
 BUILD_DIR=build
 
+MAKEFLAGS += -j4
+
 INCLUDE=$(SDL_INCLUDE_DIR) $(MANUGB_INCLUDE_DIR)
 SRC=src
 
-OBJS = CPU.o InstructionSet.o InterruptManager.o \
+OBJS = CPU.o MBCFactory.o InstructionSet.o InterruptManager.o \
 	   MMU.o PPU.o Timer.o GameBoy.o SDLDisplay.o Main.o
 
+
 debug: CXXFLAGS+=-g
+debug-profile : CXXFLAGS+=-g -DPROFILE
+
 debug: emulator
+debug-profile: emulator
 
 emulator: $(BUILD_DIR) $(LIB) $(SDL_INCLUDE) $(SRC_INCLUDE) $(SRC) $(OBJS)
 	$(CXX) $(CXXFLAGS) -o ManuGB $(BUILD_DIR)/*.o -I$(SDL_INCLUDE) -I$(SRC_INCLUDE) -L$(LIB) $(LDFLAGS)
@@ -30,6 +36,9 @@ InterruptManager.o : $(SRC)/cpu/InterruptManager.cpp
 
 MMU.o : $(SRC)/mmu/MMU.cpp
 	$(CXX) $(CXXFLAGS) -c $(SRC)/mmu/MMU.cpp -I $(SRC_INCLUDE) -o $(BUILD_DIR)/MMU.o
+
+MBCFactory.o : $(SRC)/mmu/mbc/MBCFactory.cpp
+	$(CXX) $(CXXFLAGS) -c $(SRC)/mmu/mbc/MBCFactory.cpp -I $(SRC_INCLUDE) -o $(BUILD_DIR)/MBCFactory.o
 
 PPU.o : $(SRC)/ppu/PPU.cpp
 	$(CXX) $(CXXFLAGS) -c $(SRC)/ppu/PPU.cpp -I $(SRC_INCLUDE) -o $(BUILD_DIR)/PPU.o
