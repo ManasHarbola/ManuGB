@@ -1,9 +1,7 @@
 #include "Timer.h"
 
 
-Timer::Timer(InterruptManager &int_manager) : int_manager_(int_manager) {
-
-}
+Timer::Timer(InterruptManager &int_manager) : int_manager_(int_manager) {}
 
 void Timer::tick() {
     div_++;

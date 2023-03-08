@@ -68,6 +68,13 @@ void PPU::tick() {
     }
 }
 
+bool PPU::manages(uint16_t addr) {
+    return (addr >= 0x8000 && addr < 0xA000) ||
+           (addr >= 0xFE00 && addr < 0xFEA0) ||
+           (addr >= 0xFF40 && addr < 0xFF46) || 
+           (addr >= 0xFF47 && addr < 0xFF4C); 
+}
+
 uint8_t PPU::read(uint16_t addr) {
     //VRAM read - allowed when PPU not in PIXEL_TRANSFER mode
     if (addr >= 0x8000 && addr < 0xA000 && vram_accessible())

@@ -2,8 +2,9 @@
 
 #include <cstdint>
 #include <cpu/InterruptManager.h>
+#include <mmu/AddressSpace.h>
 
-class Joypad {
+class Joypad : public AddressSpace {
 public:
     static constexpr uint8_t SELECT_DIRECTION{1 << 4};
     static constexpr uint8_t SELECT_ACTION{1 << 5};
@@ -27,7 +28,7 @@ public:
         if (!int_manager_)
             int_manager_ = &int_manager;
     }
-    uint8_t read(uint16_t addr) {
+    uint8_t read(uint16_t addr) override {
         if (addr == 0xFF00) {
             switch (select_) {
                 case 0xD0:
@@ -42,9 +43,12 @@ public:
         }
         return 0xFF;
     }
-    void write(uint16_t addr, uint8_t val) {
+    void write(uint16_t addr, uint8_t val) override {
         if (addr == 0xFF00)
             select_ = 0xC0 | (val & 0x30);
+    }
+    bool manages(uint16_t addr) override {
+        return addr == 0xFF00;
     }
 protected:
     uint8_t select_{0xC0};

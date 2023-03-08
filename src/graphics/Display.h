@@ -16,4 +16,6 @@ public:
                       uint32_t height, int pixel_size) const = 0;
     //GUI requests emulation to close
     virtual bool exit_requested() = 0;
+    //GUI requests emulation to pause
+    virtual bool pause_requested() = 0;
 };

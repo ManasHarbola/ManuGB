@@ -53,6 +53,10 @@ void SDLDisplay::poll_events() {
             case SDL_QUIT:
                 exit_requested_ = true;
                 break;
+            case SDL_KEYDOWN:
+                if (event_.key.keysym.scancode == SDL_SCANCODE_P)
+                    pause_requested_ = !pause_requested_;
+                break;
         }
     }
 }

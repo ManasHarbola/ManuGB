@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Logging.h>
+#include <mmu/AddressSpace.h>
 #include <cpu/InterruptManager.h>
 #include <Constants.h>
 #include <Color.h>
@@ -13,12 +14,13 @@ enum class PPUState : uint8_t
     HBLANK = 0,
     VBLANK = 1
 };
-class PPU {
+class PPU : public AddressSpace {
 public:
     PPU(InterruptManager& int_manager);
     void tick();
-    uint8_t read(uint16_t addr);
-    void write(uint16_t addr, uint8_t val);
+    uint8_t read(uint16_t addr) override;
+    void write(uint16_t addr, uint8_t val) override;
+    bool manages(uint16_t addr) override;
     const char* get_buffer() {return frame_buffer_;}
 
     //PPU State Periods

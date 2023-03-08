@@ -2,9 +2,10 @@
 
 #include <Logging.h>
 #include <cstdint>
+#include <mmu/AddressSpace.h>
 #include <cpu/InterruptManager.h>
 
-class Serial {
+class Serial : public AddressSpace {
 public:
     Serial(InterruptManager& int_manager) : int_manager_(int_manager) {}
     void tick() {
@@ -24,7 +25,7 @@ public:
             }
         }
     }
-    uint8_t read(uint16_t addr) {
+    uint8_t read(uint16_t addr) override {
         switch(addr) {
             case 0xFF01:
                 return SB_;
@@ -34,7 +35,7 @@ public:
                 return 0xFF;
         }
     }
-    void write(uint16_t addr, uint8_t val) {
+    void write(uint16_t addr, uint8_t val) override {
         switch(addr) {
             case 0xFF01:
                 SB_ = val;
@@ -52,6 +53,10 @@ public:
                 }
                 break;
         }
+    }
+
+    bool manages(uint16_t addr) override {
+        return addr == 0xFF01 || addr == 0xFF02;
     }
     
     static constexpr uint32_t SERIAL_FREQ{8192};
