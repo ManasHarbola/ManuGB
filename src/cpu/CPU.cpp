@@ -13,20 +13,18 @@ CPU::~CPU() {
 
 }
 
-void CPU::write_state_to_log(std::ofstream& os) {
-    if (os.is_open()) {
-        //"A:01 F:B0 B:00 C:13 D:00 E:D8 H:01 L:4D SP:FFFE PC:0100 PCMEM:00,C3,13,02";
-        char buf[74];
-        snprintf(buf, 74,
-                 "A:%02X F:%02X B:%02X C:%02X D:%02X E:%02X H:%02X L:%02X SP:%04X PC:%04X PCMEM:%02X,%02X,%02X,%02X",
-                 registers_.a, registers_.f, registers_.b,
-                 registers_.c, registers_.d, registers_.e,
-                 registers_.h, registers_.l, registers_.sp,
-                 registers_.pc,
-                 mmu_.read(registers_.pc), mmu_.read(registers_.pc+1),
-                 mmu_.read(registers_.pc+2), mmu_.read(registers_.pc+3));
-        os << std::string(buf) << std::endl;   
-    }
+void CPU::write_state_to_log(std::ostream& os) {
+    //"A:01 F:B0 B:00 C:13 D:00 E:D8 H:01 L:4D SP:FFFE PC:0100 PCMEM:00,C3,13,02";
+    char buf[74];
+    snprintf(buf, 74,
+                "A:%02X F:%02X B:%02X C:%02X D:%02X E:%02X H:%02X L:%02X SP:%04X PC:%04X PCMEM:%02X,%02X,%02X,%02X",
+                registers_.a, registers_.f, registers_.b,
+                registers_.c, registers_.d, registers_.e,
+                registers_.h, registers_.l, registers_.sp,
+                registers_.pc,
+                mmu_.read(registers_.pc), mmu_.read(registers_.pc+1),
+                mmu_.read(registers_.pc+2), mmu_.read(registers_.pc+3));
+    os << std::string(buf) << std::endl;   
 }
 
 void CPU::init_registers() {
@@ -82,6 +80,7 @@ void CPU::tick() {
                           << (unsigned int) desired_pc_count << std::endl;
             }
 
+            //write_state_to_log(std::cout);
             //get instruction at pc and increment pc
             curr_inst_ = mmu_.read(registers_.pc++);
             //std::cout << "Inst: " << print_num<int>(curr_inst_, std::hex) << std::endl;

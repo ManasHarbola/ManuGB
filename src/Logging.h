@@ -6,7 +6,7 @@
 #define LOG(msg) (std::cout << __FILE__ << ":" << __LINE__ << "|" << __func__ << "|" <<  msg << std::endl)
 
 template<typename NumType>
-std::string print_num(NumType n, std::ios_base& (&fmt)(std::ios_base&)) {
+std::string print_num(NumType n, std::ios_base& (&fmt)(std::ios_base&)=std::hex) {
     std::stringstream ss;
     ss << "0x" << fmt << n;
     return ss.str();

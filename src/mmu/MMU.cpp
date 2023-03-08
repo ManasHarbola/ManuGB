@@ -35,22 +35,11 @@ bool MMU::load_rom(const std::string& rom_path) {
 
     //create mbc_ instance
     mbc_ = MBCFactory::create_mbc(cart_header[0x147], rom_file);
-
-    if (!mbc_) {
+    if (!mbc_ || !mbc_->rom_loaded()) {
         std::cout << "unable to create memory bank controller..." << std::endl;
         return false;
     }
-
     rom_file.close();
-    
-    /*
-    //copy first 32k of rom onto mem_
-    //std::copy(cart_, cart_ + 32_kb, rom_);
-    for (size_t i = 0; i < 32_kb; i++) {
-        rom_.write(i, cart_[i]);
-    }
-    */
-
     //set initial values of hardware registers
     //TODO: clean this up lol
     write(0xFF00, 0xCF);	
@@ -112,7 +101,6 @@ bool MMU::load_rom(const std::string& rom_path) {
 }
 
 void MMU::tick() {
-    //reset_joypad();
     if (mbc_)
         mbc_->tick();
     if (dma_transfer_lock_ > 0) {
@@ -123,9 +111,8 @@ void MMU::tick() {
                 DMA_ -= 0x20;
             uint16_t start = ((uint16_t) DMA_) << 8;
             for (uint16_t offset = 0; offset < 0xA0; offset++) {
-                //write(0xFE00 | offset, read(start | offset));
-                uint8_t v = read(start | offset);
-                write(0xFE00 | offset, v);
+                uint8_t val = read(start | offset);
+                write(0xFE00 | offset, val);
             }
         }
     }
@@ -160,9 +147,8 @@ uint8_t MMU::read(uint16_t addr) {
 
 void MMU::write(uint16_t addr, uint8_t val) {
     switch(addr) {
+        //Interrupt Flag
         case 0xFF0F:
-            //log for debugging
-            //LOG("IF set to: " << (unsigned int) val);
             int_manager_.set_IF(val);
             break;
         case 0xFF46:
@@ -171,8 +157,6 @@ void MMU::write(uint16_t addr, uint8_t val) {
             break;
         // Interrupt Enable
         case 0xFFFF:
-            //log for debugging
-            //LOG("IE set to: " << (unsigned int) val);
             int_manager_.set_IE(val);
             break;
         }

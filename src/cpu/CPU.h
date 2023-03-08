@@ -65,7 +65,7 @@ class CPU {
         void tick();
         //useful methods for debugging
         registers get_registers() {return registers_;}
-        void write_state_to_log(std::ofstream& os);
+        void write_state_to_log(std::ostream& os);
 
     private:
         registers registers_;

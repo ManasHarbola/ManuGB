@@ -23,14 +23,11 @@ int GameBoy::run() {
         std::cout << "ManuGB cannot run - rom not loaded" << std::endl;
         return -1;
     }
-
     std::cout << "Beginning emulation..." << std::endl;
-    
     #ifdef PROFILE
     double avg_fps = 0.0;
     size_t t = 1;
     #endif
-
     while (!display_.exit_requested()) {
         high_resolution_clock::time_point start = high_resolution_clock::now();
         
@@ -56,7 +53,6 @@ int GameBoy::run() {
         double wait_msec = (1000.0 / 60.0) - time_span.count();
         #ifdef PROFILE
             //std::cout << "It took " << time_span.count() << "ms to perform " << CYCLES_PER_FRAME << " t-cycles" << std::endl;
-            //std::cout << std::string(50, '\b'^i/);
             std::cout << "Unlocked FPS: " << static_cast<int>(1000.0 / time_span.count()) << std::endl;
             avg_fps += (static_cast<double>(1000.0 / time_span.count()) - avg_fps) / t;
             ++t;
