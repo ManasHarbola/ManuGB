@@ -11,10 +11,15 @@ constexpr uint32_t DISPLAY_HEIGHT{144};
 constexpr size_t operator""_kb(unsigned long long num){return (1 << 10) * num;}
 constexpr size_t operator""_mb(unsigned long long num){return (1 << 20) * num;}
 
-//
+//returns if val is in interval [left_bound, right_bound]
 template<typename Tv, typename Tl, typename Tr>
 constexpr inline bool in_range_closed(const Tv val, const Tl left_bound, const Tr right_bound){
     return (val >= left_bound) && (val <= right_bound);
+}
+//return if val is in interval [left_bound, right_bound)
+template<typename Tv, typename Tl, typename Tr>
+constexpr inline bool in_range(const Tv val, const Tl left, const Tr right) {
+    return (val >= left) && (val < right);
 }
 
 

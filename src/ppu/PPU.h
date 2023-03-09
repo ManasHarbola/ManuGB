@@ -61,8 +61,8 @@ private:
     inline bool ppu_enabled() {return LCDC_ & LCD_ENABLE;}
     inline PPUState get_ppu_state() {return (PPUState) (STAT_ & STATE_MASK);}
     inline bool vram_accessible() {
-        //return true;
-        return !ppu_enabled() || (get_ppu_state() != PPUState::PIXEL_TRANSFER);
+        return true;
+        //return !ppu_enabled() || (get_ppu_state() != PPUState::PIXEL_TRANSFER);
     }
     inline bool oam_accessible() {
         //return true;
