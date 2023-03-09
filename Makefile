@@ -25,7 +25,7 @@ debug: emulator
 debug-profile: emulator
 
 emulator: $(BUILD_DIR) $(LIB) $(SDL_INCLUDE) $(SRC_INCLUDE) $(SRC) $(OBJS)
-	$(CXX) $(CXXFLAGS) -o ManuGB $(BUILD_DIR)/*.o -I$(SDL_INCLUDE) -I$(SRC_INCLUDE) -L$(LIB) $(LDFLAGS)
+	$(CXX) $(CXXFLAGS) -o release/ManuGB/ManuGB $(BUILD_DIR)/*.o -I$(SDL_INCLUDE) -I$(SRC_INCLUDE) -L$(LIB) $(LDFLAGS)
 
 CPU.o : $(SRC)/cpu/CPU.cpp
 	$(CXX) $(CXXFLAGS) -c $(SRC)/cpu/CPU.cpp -I $(SRC_INCLUDE) -o $(BUILD_DIR)/CPU.o

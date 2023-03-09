@@ -1,5 +1,6 @@
 #include "MBC.h"
 
+
 uint8_t MBC1::read(uint16_t addr) {
     if (addr < 0x4000) {
         addr &= 0x3FFF;

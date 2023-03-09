@@ -2,6 +2,7 @@
 
 #include <fstream>
 #include <iostream>
+#include <fstream>
 #include <algorithm>
 #include <cstdint>
 #include <Constants.h>
@@ -12,6 +13,8 @@ class MBC : public AddressSpace {
 public:
     virtual ~MBC() = default;
     virtual bool rom_loaded() const = 0;
+    virtual bool save_state(std::ofstream& save_file) = 0;
+    virtual bool load_save(std::ifstream& save_file) = 0;
     virtual void tick() {}
 };
 
@@ -42,6 +45,30 @@ public:
                     << std::endl;
         rom_loaded_ = true;
     }
+    
+    bool save_state(std::ofstream& save_file) override {
+        if (save_file.good()) {
+            save_file.write(reinterpret_cast<const char*>(ram_), RAM_SPACE * sizeof(uint8_t));
+            save_file.flush();
+        } else {
+            std::cout << "Cannot save game state: bad save file handle" << std::endl;
+        }
+        return save_file.good();
+    }
+
+    bool load_save(std::ifstream& save_file) override {
+        if (save_file.good()) {
+            save_file.clear();
+            save_file.seekg(0, std::ios::end);
+            size_t sz = save_file.tellg();
+            save_file.seekg(0, std::ios::beg);
+            save_file.read(reinterpret_cast<char*>(ram_), std::min(RAM_SPACE * sizeof(uint8_t), sz));
+        } else {
+            std::cout << "Cannot load save state: bad save file handle" << std::endl;
+        }
+        return save_file.good();
+    }
+
     virtual bool manages(uint16_t addr) override {
         return in_range_closed(addr, 0, 0x7FFF) || in_range_closed(addr, 0xA000, 0xBFFF);
     }
