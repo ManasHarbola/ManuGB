@@ -5,13 +5,14 @@
 #include <cstdlib>
 
 int main(int argc, char **argv) {
-    //currently, we just need to implement the CPU, we can worry about file handle to the ROM later during testing
+    if (argc < 2) {
+        std::cout << "ROM File Not Specified" << std::endl;
+        return -1;
+    }
     if (SDL_Init(SDL_INIT_EVERYTHING) < 0) {
         std::cout << SDL_GetError() << std::endl;
-        //errcode = - 1;
         return -1;
     }    
-
     std::string rom_path = "./" + std::string(argv[1]);
 
     int display_errcode = 0;
