@@ -1,5 +1,6 @@
 #include "MMU.h"
 #include <algorithm>
+#include <sstream>
 #include <initializer_list>
 
 MMU::MMU(InterruptManager& int_manager, Timer& timer, Serial& port,
@@ -30,6 +31,12 @@ bool MMU::load_rom(const std::string& rom_path) {
     
     //read the cartridge header to create mbc instance
     rom_file.read((char*) cart_header, 0x150);
+
+    std::stringstream rom_name_ss;
+    for (int i = 0x134; i < 0x144 && cart_header[i]; i++) {
+        rom_name_ss << static_cast<char>(cart_header[i]);
+    }
+    rom_name_ = rom_name_ss.str();
 
     rom_file.seekg(0, std::ios::beg);
 
@@ -98,6 +105,42 @@ bool MMU::load_rom(const std::string& rom_path) {
     write(0xFF70, 0xFF);	
     write(0xFFFF, 0x00);
     return true;
+}
+
+bool MMU::save_state() {
+    bool succeeded = false;
+    if (rom_name_ != "") {
+        std::string path = "./saves/" + rom_name_ + ".gbsav";
+        std::ofstream save_file(path);
+        if (save_file && mbc_) {
+            succeeded = mbc_->save_state(save_file);
+        } 
+    }
+    if (!succeeded)
+        std::cout << "Failed to save game state: Unable to open/create file" << std::endl;
+    return succeeded;
+}
+
+bool MMU::load_state() {
+    bool succeeded = false;
+    if (rom_name_ != "") {
+        std::string path = "./saves/" + rom_name_ + ".gbsav";
+        std::ifstream save_file(path);
+        if (save_file.good()) {
+            if (mbc_)
+                succeeded = mbc_->load_save(save_file);
+            if (succeeded) {
+                std::cout << "Successfully loaded from existing save file!" << std::endl;
+            }
+        } else {
+            //create save file
+            std::ofstream new_save_file(path);
+            succeeded = new_save_file.good();
+            if (succeeded)
+                std::cout << "Couldn't find save file, created one instead" << std::endl;
+        }
+    }
+    return succeeded;
 }
 
 void MMU::tick() {

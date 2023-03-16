@@ -15,6 +15,8 @@ public:
                       uint32_t height, int pixel_size) const override;
     virtual bool exit_requested() override {return exit_requested_;}
     virtual bool pause_requested() override {return pause_requested_;}
+    virtual bool save_requested() override {return save_requested_;}
+
     virtual void poll_joypad() override;
 private:
     SDL_Window* window_{nullptr};
@@ -26,4 +28,5 @@ private:
     const Uint8* keyboard_state_;
     bool exit_requested_{false};
     bool pause_requested_{false};
+    bool save_requested_{false};
 };

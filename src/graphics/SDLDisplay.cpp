@@ -48,17 +48,27 @@ void SDLDisplay::draw(const void* frameBuffer, uint32_t width,
 
 void SDLDisplay::poll_events() {
     //poll all events here
+    bool save_requested = false;
     while (SDL_PollEvent(&event_)) {
         switch (event_.type) {
             case SDL_QUIT:
                 exit_requested_ = true;
+                //automatically save the game as well
+                save_requested = true;
                 break;
             case SDL_KEYDOWN:
-                if (event_.key.keysym.scancode == SDL_SCANCODE_P)
-                    pause_requested_ = !pause_requested_;
+                switch(event_.key.keysym.scancode) {
+                    case SDL_SCANCODE_P:
+                        pause_requested_ = !pause_requested_;
+                        break;
+                    case SDL_SCANCODE_T:
+                        save_requested = true;
+                        break;
+                }
                 break;
         }
     }
+    save_requested_ = save_requested;
 }
 
 void SDLDisplay::poll_joypad() {

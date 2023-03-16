@@ -36,27 +36,26 @@ class MMU : public AddressSpace {
             PPU& ppu, Joypad& buttons);
 
         void tick();
-        bool load_rom(const std::string &rom_path);
+        bool load_rom(const std::string& rom_path);
+        bool save_state();
+        bool load_state();
         uint8_t read(uint16_t addr) override;
         void write(uint16_t addr, uint8_t val) override;
         bool manages(uint16_t addr) override {return true;}
-
-        static constexpr size_t DMA_TRANSFER_PERIOD{644};
-        static constexpr uint8_t SELECT_ACTION{1 << 5};
-        static constexpr uint8_t SELECT_DIRECTION{1 << 4};
         //returns whether a OAM DMA transfer is currently happening
         bool dma_transfer() {
             return dma_transfer_lock_ > 0;
         }
 
-    private:
-        //uint8_t curr_bank_{1};
-        //uint8_t cart_[CART_SPACE];
-        std::shared_ptr<MBC> mbc_{nullptr};
+        static constexpr size_t DMA_TRANSFER_PERIOD{644};
+        static constexpr uint8_t SELECT_ACTION{1 << 5};
+        static constexpr uint8_t SELECT_DIRECTION{1 << 4};
 
-        //AddressableArray<0x8000> rom_{0, 0x7FFF};
+    private:
+        //Memory Bank Controller
+        std::shared_ptr<MBC> mbc_{nullptr};
+        //Internal working ram in GameBoy
         AddressableArray<0x2000> wram_{0xC000, 0xDFFF};
-        //AddressableArray<0x2000> external_ram_{0xA000, 0xBFFF};
 
         //Sound Registers (Sound not implemented yet)
         AddressableArray<0x17> nr_{0xFF10, 0xFF26};
@@ -66,6 +65,9 @@ class MMU : public AddressSpace {
         uint8_t DMA_{0xFF};
         //indicates whether a dma_transfer is in process
         uint16_t dma_transfer_lock_{0};
+
+        //used for saving/loading game state
+        std::string rom_name_{""};
 
         InterruptManager& int_manager_;
         Timer& timer_;

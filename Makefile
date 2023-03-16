@@ -12,9 +12,11 @@ MAKEFLAGS += -j4
 INCLUDE=$(SDL_INCLUDE_DIR) $(MANUGB_INCLUDE_DIR)
 SRC=src
 
-OBJS = CPU.o MBCFactory.o InstructionSet.o InterruptManager.o \
+OBJS = CPU.o MBC.o MBCFactory.o InstructionSet.o InterruptManager.o \
 	   MMU.o PPU.o Timer.o GameBoy.o SDLDisplay.o Main.o
 
+clean:
+	rm $(BUILD_DIR)/*.o
 
 debug: CXXFLAGS+=-g
 debug-profile : CXXFLAGS+=-g -DPROFILE
@@ -23,7 +25,7 @@ debug: emulator
 debug-profile: emulator
 
 emulator: $(BUILD_DIR) $(LIB) $(SDL_INCLUDE) $(SRC_INCLUDE) $(SRC) $(OBJS)
-	$(CXX) $(CXXFLAGS) -o ManuGB $(BUILD_DIR)/*.o -I$(SDL_INCLUDE) -I$(SRC_INCLUDE) -L$(LIB) $(LDFLAGS)
+	$(CXX) $(CXXFLAGS) -o release/ManuGB/ManuGB $(BUILD_DIR)/*.o -I$(SDL_INCLUDE) -I$(SRC_INCLUDE) -L$(LIB) $(LDFLAGS)
 
 CPU.o : $(SRC)/cpu/CPU.cpp
 	$(CXX) $(CXXFLAGS) -c $(SRC)/cpu/CPU.cpp -I $(SRC_INCLUDE) -o $(BUILD_DIR)/CPU.o
@@ -36,6 +38,9 @@ InterruptManager.o : $(SRC)/cpu/InterruptManager.cpp
 
 MMU.o : $(SRC)/mmu/MMU.cpp
 	$(CXX) $(CXXFLAGS) -c $(SRC)/mmu/MMU.cpp -I $(SRC_INCLUDE) -o $(BUILD_DIR)/MMU.o
+
+MBC.o : $(SRC)/mmu/mbc/MBC.cpp
+	$(CXX) $(CXXFLAGS) -c $(SRC)/mmu/mbc/MBC.cpp -I $(SRC_INCLUDE) -o $(BUILD_DIR)/MBC.o
 
 MBCFactory.o : $(SRC)/mmu/mbc/MBCFactory.cpp
 	$(CXX) $(CXXFLAGS) -c $(SRC)/mmu/mbc/MBCFactory.cpp -I $(SRC_INCLUDE) -o $(BUILD_DIR)/MBCFactory.o

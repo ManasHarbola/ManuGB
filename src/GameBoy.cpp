@@ -12,6 +12,9 @@ display_(display), buttons_(buttons) {
         std::cout << "Loading rom " << rom_path << " failed..." << std::endl;
         return;
     }
+
+    //attempt to load sram state 
+    mmu_.load_state();
     buttons_.register_interrupt(int_manager_);
 }
 
@@ -37,6 +40,11 @@ int GameBoy::run() {
             std::cout << std::endl << "Emulation Paused" << std::endl;
         else if (was_paused && !display_.pause_requested())
             std::cout << std::endl << "Emulation Resumed" << std::endl;
+
+        if (display_.save_requested()) {
+            //write save state to save file
+            std::cout << std::endl << (mmu_.save_state() ? "Saving State Succeeded!" : "Saving State Failed!") << std::endl;
+        }
 
         if (!display_.pause_requested()) {
             //update joypad

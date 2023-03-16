@@ -2,6 +2,7 @@
 
 #include <fstream>
 #include <iostream>
+#include <fstream>
 #include <algorithm>
 #include <cstdint>
 #include <Constants.h>
@@ -12,6 +13,8 @@ class MBC : public AddressSpace {
 public:
     virtual ~MBC() = default;
     virtual bool rom_loaded() const = 0;
+    virtual bool save_state(std::ofstream& save_file) = 0;
+    virtual bool load_save(std::ifstream& save_file) = 0;
     virtual void tick() {}
 };
 
@@ -42,6 +45,30 @@ public:
                     << std::endl;
         rom_loaded_ = true;
     }
+    
+    bool save_state(std::ofstream& save_file) override {
+        if (save_file.good()) {
+            save_file.write(reinterpret_cast<const char*>(ram_), RAM_SPACE * sizeof(uint8_t));
+            save_file.flush();
+        } else {
+            std::cout << "Cannot save game state: bad save file handle" << std::endl;
+        }
+        return save_file.good();
+    }
+
+    bool load_save(std::ifstream& save_file) override {
+        if (save_file.good()) {
+            save_file.clear();
+            save_file.seekg(0, std::ios::end);
+            size_t sz = save_file.tellg();
+            save_file.seekg(0, std::ios::beg);
+            save_file.read(reinterpret_cast<char*>(ram_), std::min(RAM_SPACE * sizeof(uint8_t), sz));
+        } else {
+            std::cout << "Cannot load save state: bad save file handle" << std::endl;
+        }
+        return save_file.good();
+    }
+
     virtual bool manages(uint16_t addr) override {
         return in_range_closed(addr, 0, 0x7FFF) || in_range_closed(addr, 0xA000, 0xBFFF);
     }
@@ -86,62 +113,8 @@ specific to the rom (e.g. some roms use a MBC3 + timer, some just use MBC3)
 class MBC1 : public BasicMBC<2_mb, 32_kb> {
 public:
     MBC1(std::ifstream& rom_file) : BasicMBC(rom_file) {}
-    virtual uint8_t read(uint16_t addr) override {
-        if (addr < 0x4000) {
-            addr &= 0x3FFF;
-            return bank_mode_ ? cart_[((register2_ << 19) | static_cast<uint32_t>(addr)) % (rom_size_kb() << 10)] : cart_[addr];
-        } else if (addr < 0x8000) {
-            return cart_[((register2_ << 19) | (rom_bank1_ << 14) | static_cast<uint32_t>(addr & 0x3FFF)) % (rom_size_kb() << 10)];
-        } else if (addr >= 0xA000 && addr < 0xC000) {
-            if (ram_enable_) {
-                addr &= 0x1FFF;
-                return bank_mode_ ? ram_[((register2_ << 13) | static_cast<uint32_t>(addr)) % (ram_size_kb() << 10)] : ram_[addr];
-            } else {
-                #ifdef PROFILE
-                std::cout << "Ram disabled, cannot access: " << print_num<int>(addr) << std::endl;
-                #endif
-            }
-        } else {
-            #ifdef PROFILE
-            std::cout << "Cannot read from location " << print_num<int>(addr, std::hex) << std::endl;
-            #endif
-        }
-        return 0xFF;        
-    }
-    virtual void write(uint16_t addr, uint8_t val) override {
-        if (addr < 0x2000) {
-            if (rom_size_kb() != 0)
-                ram_enable_ = ((val & 0x0F) == 0x0A);
-        } else if (addr < 0x4000) {
-            rom_bank1_ = val & 0x1F;
-            if (rom_bank1_ == 0) {
-                rom_bank1_ = 1;
-            } else if (rom_bank1_ >= num_rom_banks()) {
-                rom_bank1_ &= (num_rom_banks() - 1);
-            }
-        } else if (addr < 0x6000) {
-            if ((ram_size_kb() == 32 || rom_size_kb() >= 1024)) {
-                register2_ = static_cast<uint32_t>(val & 3);
-            }
-        } else if (addr < 0x8000) {
-            if ((ram_size_kb() > 8 || rom_size_kb() > 512)) {
-                bank_mode_ = (val & 1) != 0;
-            }
-        } else if (addr >= 0xA000 && addr < 0xC000) {
-            if (ram_enable_) {
-                addr &= 0x1FFF;
-                if (bank_mode_) {
-                    ram_[((register2_ << 13) | static_cast<uint32_t>(addr)) % (ram_size_kb() << 10)] = val;
-                } else {
-                    ram_[addr] = val;
-                }
-            } else {
-                #ifdef PROFILE
-                std::cout << "Ram currently disabled, cannot access " << print_num<int>(addr) << std::endl;
-                #endif
-            }
-        }
-    }
+    virtual uint8_t read(uint16_t addr) override;
+    virtual void write(uint16_t addr, uint8_t val) override;
 private:
     uint32_t rom_bank1_{1};
     uint32_t register2_{0};
@@ -153,7 +126,20 @@ class MBC2 : public BasicMBC<256_kb, 512> {
 public:
 
 };
-class MBC3 : public BasicMBC<2_mb, 64_kb> {
+class MBC3 : public BasicMBC<4_mb, 64_kb> {
 public:
-
+    MBC3(std::ifstream& rom_file) : BasicMBC(rom_file) {}
+    virtual uint8_t read(uint16_t addr) override;
+    virtual void write(uint16_t addr, uint8_t val) override;
+    virtual void tick() override;
+private:
+    uint32_t t_cycle_lock_{0};
+    uint8_t rtc_[5]{0};
+    uint8_t current_rtc_[5]{0};
+    const static uint16_t RTC_RANGES[4];
+    uint32_t rom_bank1_{1}; 
+    uint8_t ram_bank_rtc_register_{0};
+    bool ram_timer_enable_{false};
+    //for handling 00h->01h latch clock data
+    bool latch_queued{false};
 };
