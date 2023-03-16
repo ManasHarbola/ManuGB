@@ -1,12 +1,17 @@
+#Specify C++ compiler here
 CXX=g++
+
 VERSION=-std=c++17
 CXXFLAGS= $(VERSION) -Wall -O3
 LDFLAGS=-lSDL2
-SDL_INCLUDE=/opt/homebrew/include
-LIB=/opt/homebrew/lib
 SRC_INCLUDE=src
 BUILD_DIR=build
 
+#Change SDL include and lib path to match platform
+SDL_INCLUDE=/opt/homebrew/include
+LIB=/opt/homebrew/lib
+
+#For parallelized compilation
 MAKEFLAGS += -j4
 
 INCLUDE=$(SDL_INCLUDE_DIR) $(MANUGB_INCLUDE_DIR)
